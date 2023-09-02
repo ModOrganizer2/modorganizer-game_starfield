@@ -6,5 +6,5 @@ else()
 	include(${CMAKE_CURRENT_LIST_DIR}/cmake_common/mo2.cmake)
 endif()
 
-project(game_fallout4)
+project(game_starfield)
 add_subdirectory(src)
