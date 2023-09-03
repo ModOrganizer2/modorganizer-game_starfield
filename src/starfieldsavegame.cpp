@@ -7,7 +7,7 @@
 StarfieldSaveGame::StarfieldSaveGame(QString const &fileName, GameStarfield const* game) :
   GamebryoSaveGame(fileName, game, true)
 {
-  FileWrapper file(getFilepath(), "SFS_SAVEGAME");
+  FileWrapper file(getFilepath(), "BCPS");
 
   FILETIME creationTime;
   fetchInformationFields(file, m_SaveNumber, m_PCName, m_PCLevel, m_PCLocation, creationTime);
