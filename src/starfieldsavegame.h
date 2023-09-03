@@ -2,6 +2,7 @@
 #define STARFIELDSAVEGAME_H
 
 #include "gamebryosavegame.h"
+#include "zlib.h"
 
 #include <Windows.h>
 
