@@ -10,10 +10,10 @@ StarfieldScriptExtender::StarfieldScriptExtender(GameGamebryo const *game) :
 
 QString StarfieldScriptExtender::BinaryName() const
 {
-  return "f4se_loader.exe";
+  return "";
 }
 
 QString StarfieldScriptExtender::PluginPath() const
 {
-  return "f4se/plugins";
+  return "";
 }

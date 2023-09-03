@@ -7,7 +7,7 @@
 StarfieldSaveGame::StarfieldSaveGame(QString const &fileName, GameStarfield const* game) :
   GamebryoSaveGame(fileName, game, true)
 {
-  FileWrapper file(getFilepath(), "BCPS");
+  FileWrapper file(getFilepath(), "SFS_SAVEGAME");
 
   FILETIME creationTime;
   fetchInformationFields(file, m_SaveNumber, m_PCName, m_PCLevel, m_PCLocation, creationTime);
@@ -52,7 +52,7 @@ void StarfieldSaveGame::fetchInformationFields(
 
 std::unique_ptr<GamebryoSaveGame::DataFields> StarfieldSaveGame::fetchDataFields() const
 {
-  FileWrapper file(getFilepath(), "FO4_SAVEGAME"); //10bytes
+  FileWrapper file(getFilepath(), "SFS_SAVEGAME"); //10bytes
 
   {
     QString dummyName, dummyLocation;
