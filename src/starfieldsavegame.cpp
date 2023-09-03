@@ -3,6 +3,7 @@
 #include <Windows.h>
 
 #include "gamestarfield.h"
+#include "zlib.h"
 
 StarfieldSaveGame::StarfieldSaveGame(QString const &fileName, GameStarfield const* game) :
   GamebryoSaveGame(fileName, game, true)
