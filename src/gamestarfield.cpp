@@ -63,15 +63,16 @@ void GameStarfield::detectGame()
 
 QString GameStarfield::identifyGamePath() const
 {
-    QString path = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 1716740";
-    return findInRegistry(HKEY_LOCAL_MACHINE, path.toStdWString().c_str(), L"InstallLocation");
+  QString path = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 1716740";
+  return findInRegistry(HKEY_LOCAL_MACHINE, path.toStdWString().c_str(), L"InstallLocation");
 }
 
 QList<ExecutableInfo> GameStarfield::executables() const
 {
   return QList<ExecutableInfo>()
-      << ExecutableInfo("Starfield", findInGameFolder(binaryName()))
-         ;
+    << ExecutableInfo("SFSE", findInGameFolder(feature<ScriptExtender>()->loaderName()))
+    << ExecutableInfo("Starfield", findInGameFolder(binaryName()))
+       ;
 }
 
 QList<ExecutableForcedLoadSetting> GameStarfield::executableForcedLoads() const
@@ -125,7 +126,7 @@ void GameStarfield::initializeProfile(const QDir &path, ProfileSettings settings
     }
 
     copyToProfile(myGamesPath(), path, "StarfieldPrefs.ini");
-	copyToProfile(myGamesPath(), path, "StarfieldCustom.ini");
+    copyToProfile(myGamesPath(), path, "StarfieldCustom.ini");
   }
 }
 
@@ -150,7 +151,7 @@ QString GameStarfield::steamAPPId() const
 }
 
 QStringList GameStarfield::primaryPlugins() const {
-  QStringList plugins = {"Starfield.esm", "BlueprintShips-Starfield.esm", "Constellation.esm", "OldMars.esm"};
+  QStringList plugins = { "Starfield.esm", "BlueprintShips-Starfield.esm", "Constellation.esm", "OldMars.esm" };
 
   plugins.append(CCPlugins());
 
