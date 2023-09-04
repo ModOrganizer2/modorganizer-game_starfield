@@ -43,21 +43,5 @@ QString StarfieldUnmangedMods::displayName(const QString &modName) const
 {
   // unlike in earlier games, in fallout 4 the file name doesn't correspond to
   // the public name
-  if (modName.compare("dlcrobot", Qt::CaseInsensitive) == 0) {
-    return "Automatron";
-  } else if (modName.compare("dlcworkshop01", Qt::CaseInsensitive) == 0) {
-    return "Wasteland Workshop";
-  } else if (modName.compare("dlccoast", Qt::CaseInsensitive) == 0) {
-    return "Far Harbor";
-  } else if (modName.compare("dlcworkshop02", Qt::CaseInsensitive) == 0) {
-    return "Contraptions Workshop";
-  } else if (modName.compare("dlcworkshop03", Qt::CaseInsensitive) == 0) {
-    return "Vault-Tec Workshop";
-  } else if (modName.compare("dlcnukaworld", Qt::CaseInsensitive) == 0) {
-    return "Nuka-World";
-  } else if (modName.compare("dlcultrahighresolution", Qt::CaseInsensitive) == 0) {
-    return "Ultra High Resolution Texture Pack";
-  } else {
-    return modName;
-  }
+  return modName;
 }

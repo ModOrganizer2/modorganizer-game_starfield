@@ -49,6 +49,7 @@ public: // IPlugin interface
 
 protected:
 
+  virtual QString identifyGamePath() const override;
   std::shared_ptr<const GamebryoSaveGame> makeSaveGame(QString filePath) const override;
   QString savegameExtension() const override;
   QString savegameSEExtension() const override;

@@ -2,7 +2,7 @@
 #define STARFIELDSAVEGAME_H
 
 #include "gamebryosavegame.h"
-#include "zlib.h"
+#include <QDataStream>
 
 #include <Windows.h>
 
@@ -16,13 +16,18 @@ public:
 protected:
 
   // Fetch easy-to-access information.
+  void getData(
+    FileWrapper& file
+  ) const;
+
   void fetchInformationFields(
-    FileWrapper& file,
-    unsigned long& saveNumber,
-    QString& playerName,
-    unsigned short& playerLevel,
-    QString& playerLocation,
-    FILETIME& creationTime) const;
+      FileWrapper& file,
+      unsigned long& saveNumber,
+      QString& playerName,
+      unsigned short& playerLevel,
+      QString& playerLocation,
+      FILETIME& creationTime
+  ) const;
 
   std::unique_ptr<DataFields> fetchDataFields() const override;
 };

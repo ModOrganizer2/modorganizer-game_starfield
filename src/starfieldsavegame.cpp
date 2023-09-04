@@ -9,6 +9,7 @@ StarfieldSaveGame::StarfieldSaveGame(QString const &fileName, GameStarfield cons
 {
   FileWrapper file(getFilepath(), "BCPS");
 
+  getData(file);
   FILETIME creationTime;
   fetchInformationFields(file, m_SaveNumber, m_PCName, m_PCLevel, m_PCLocation, creationTime);
 
@@ -21,22 +22,43 @@ StarfieldSaveGame::StarfieldSaveGame(QString const &fileName, GameStarfield cons
   setCreationTime(ctime);
 }
 
-void StarfieldSaveGame::fetchInformationFields(
-  FileWrapper& file,
-  unsigned long& saveNumber,
-  QString& playerName,
-  unsigned short& playerLevel,
-  QString& playerLocation,
-  FILETIME& creationTime) const
+void StarfieldSaveGame::getData(
+    FileWrapper& file) const
 {
-  file.skip<unsigned long>(); // header size
-  file.skip<uint32_t>(); // header version
-  file.read(saveNumber);
+    file.skip<uint32_t>(); // header version
+    file.skip<uint64_t>(); // zip start location
+    file.skip<uint64_t>(); // unknown
+    file.setCompressionType(1);
+    file.openCompressedData(); // long = start, long = size
+    // double
+    // float
+    // long
+    // long
+    // short
+    return;
+}
 
+void StarfieldSaveGame::fetchInformationFields(
+    FileWrapper& file,
+    unsigned long& saveNumber,
+    QString& playerName,
+    unsigned short& playerLevel,
+    QString& playerLocation,
+    FILETIME& creationTime) const
+{
+  char fileID[12]; // SFS_SAVEGAME
+  unsigned int headerSize;
+  unsigned int version;
+  unsigned char unknown;
+  file.read(fileID, 12);
+  headerSize = file.readInt();
+  version = file.readInt();
+  unknown = file.readChar();
+  saveNumber = file.readInt();
   file.read(playerName);
 
-  unsigned long temp;
-  file.read(temp);
+  unsigned int temp;
+  temp = file.readInt();
   playerLevel = static_cast<unsigned short>(temp);
   file.read(playerLocation);
 
@@ -44,39 +66,48 @@ void StarfieldSaveGame::fetchInformationFields(
   file.read(ignore);   // playtime as ascii hh.mm.ss
   file.read(ignore);   // race name (i.e. BretonRace)
 
-  file.skip<unsigned short>(); // Player gender (0 = male)
-  file.skip<float>(2);         // experience gathered, experience required
+  unsigned short gender;
+  gender = file.readShort(); // Player gender (0 = male)
+  float experience, experienceRequired;
+  experience = file.readFloat();
+  experienceRequired = file.readFloat();
 
-  file.read(creationTime);
+  unsigned long long time = file.readLong();
+  creationTime.dwLowDateTime = (DWORD)time;
+  creationTime.dwHighDateTime = time >> 32;
 }
 
 std::unique_ptr<GamebryoSaveGame::DataFields> StarfieldSaveGame::fetchDataFields() const
 {
-  FileWrapper file(getFilepath(), "FO4_SAVEGAME"); //10bytes
+    FileWrapper file(getFilepath(), "BCPS"); //10bytes
 
-  {
-    QString dummyName, dummyLocation;
-    unsigned short dummyLevel;
-    unsigned long dummySaveNumber;
-    FILETIME dummyTime;
+    getData(file);
+    FILETIME creationTime;
 
-    fetchInformationFields(file, dummySaveNumber, dummyName, dummyLevel,
-      dummyLocation, dummyTime);
-  }
+    {
+        QString dummyName, dummyLocation;
+        unsigned short dummyLevel;
+        unsigned long dummySaveNumber;
+        FILETIME dummyTime;
 
-  QString ignore;
-  std::unique_ptr<DataFields> fields = std::make_unique<DataFields>();
+        fetchInformationFields(file, dummySaveNumber, dummyName, dummyLevel,
+            dummyLocation, dummyTime);
+    }
 
-  fields->Screenshot = file.readImage(384, true);
+    QString ignore;
+    std::unique_ptr<DataFields> fields = std::make_unique<DataFields>();
 
-  uint8_t saveGameVersion = file.readChar();
-  file.read(ignore);     // game version
-  file.skip<uint32_t>(); // plugin info size
+    //fields->Screenshot = file.readImage(384, true);
 
-  fields->Plugins = file.readPlugins();
-  if (saveGameVersion >= 68) {
-    fields->LightPlugins = file.readLightPlugins();
-  }
+    uint8_t saveGameVersion = file.readChar(12);
+    file.read(ignore);     // game version
+    file.read(ignore);     // game version again?
+    file.readInt();        // plugin info size
 
-  return fields;
+    fields->Plugins = file.readPlugins();
+    if (saveGameVersion >= 82) {
+        fields->LightPlugins = file.readLightPlugins();
+    }
+
+    return fields;
 }

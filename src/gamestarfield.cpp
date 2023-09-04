@@ -61,6 +61,12 @@ void GameStarfield::detectGame()
   m_MyGamesPath = determineMyGamesPath("Starfield");
 }
 
+QString GameStarfield::identifyGamePath() const
+{
+    QString path = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 1716740";
+    return findInRegistry(HKEY_LOCAL_MACHINE, path.toStdWString().c_str(), L"InstallLocation");
+}
+
 QList<ExecutableInfo> GameStarfield::executables() const
 {
   return QList<ExecutableInfo>()
@@ -144,7 +150,7 @@ QString GameStarfield::steamAPPId() const
 }
 
 QStringList GameStarfield::primaryPlugins() const {
-  QStringList plugins = {"Starfield.esm", "Constellation.esm", "OldMars.esm", "BlueprintShips-Starfield.esm"};
+  QStringList plugins = {"Starfield.esm", "BlueprintShips-Starfield.esm", "Constellation.esm", "OldMars.esm"};
 
   plugins.append(CCPlugins());
 
@@ -178,7 +184,29 @@ QStringList GameStarfield::DLCPlugins() const
 
 QStringList GameStarfield::CCPlugins() const
 {
-  return {};
+  QStringList plugins = {};
+  QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
+  if (file.open(QIODevice::ReadOnly)) {
+    ON_BLOCK_EXIT([&file]() { file.close(); });
+
+    if (file.size() == 0) {
+      return plugins;
+    }
+    while (!file.atEnd()) {
+      QByteArray line = file.readLine().trimmed();
+      QString modName;
+      if ((line.size() > 0) && (line.at(0) != '#')) {
+        modName = QString::fromUtf8(line.constData()).toLower();
+      }
+
+      if (modName.size() > 0) {
+        if (!plugins.contains(modName, Qt::CaseInsensitive)) {
+          plugins.append(modName);
+        }
+      }
+    }
+  }
+  return plugins;
 }
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
