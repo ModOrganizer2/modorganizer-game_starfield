@@ -90,6 +90,18 @@ QString GameStarfield::identifyGamePath() const
   return "";
 }
 
+QDir GameStarfield::dataDirectory() const
+{
+  return documentsDirectory().absoluteFilePath("Data");
+}
+
+QList<QDir> GameStarfield::secondaryDataDirectories() const
+{
+  QList<QDir> directories;
+  directories.append(gameDirectory().absoluteFilePath("Data"));
+  return directories;
+}
+
 QList<ExecutableInfo> GameStarfield::executables() const
 {
   return QList<ExecutableInfo>()
