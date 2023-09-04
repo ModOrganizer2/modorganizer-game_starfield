@@ -12,6 +12,8 @@ StarfieldSaveGame::StarfieldSaveGame(QString const &fileName, GameStarfield cons
   getData(file);
   FILETIME creationTime;
   fetchInformationFields(file, m_SaveNumber, m_PCName, m_PCLevel, m_PCLocation, creationTime);
+  file.closeCompressedData();
+  file.close();
 
   //A file time is a 64-bit value that represents the number of 100-nanosecond
   //intervals that have elapsed since 12:00 A.M. January 1, 1601 Coordinated Universal Time (UTC).
@@ -50,8 +52,8 @@ void StarfieldSaveGame::fetchInformationFields(
   unsigned int headerSize;
   unsigned int version;
   unsigned char unknown;
-  file.read(fileID, 12);
-  headerSize = file.readInt();
+  //file.read(fileID, 12);
+  headerSize = file.readInt(12);
   version = file.readInt();
   unknown = file.readChar();
   saveNumber = file.readInt();
@@ -108,6 +110,8 @@ std::unique_ptr<GamebryoSaveGame::DataFields> StarfieldSaveGame::fetchDataFields
     if (saveGameVersion >= 82) {
         fields->LightPlugins = file.readLightPlugins();
     }
+    file.closeCompressedData();
+    file.close();
 
     return fields;
 }
