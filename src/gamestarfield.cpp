@@ -6,6 +6,7 @@
 #include "starfieldmoddatachecker.h"
 #include "starfieldmoddatacontent.h"
 #include "starfieldsavegame.h"
+#include "starfieldbsainvalidation.h"
 
 #include <pluginsetting.h>
 #include <executableinfo.h>
@@ -47,6 +48,7 @@ bool GameStarfield::init(IOrganizer *moInfo)
   registerFeature<SaveGameInfo>(new GamebryoSaveGameInfo(this));
   registerFeature<GamePlugins>(new CreationGamePlugins(moInfo));
   registerFeature<UnmanagedMods>(new StarfieldUnmangedMods(this));
+  registerFeature<BSAInvalidation>(new StarfieldBSAInvalidation(feature<DataArchives>(), this));
 
   return true;
 }
@@ -82,7 +84,9 @@ QString GameStarfield::identifyGamePath() const
       }
     }
     if (!steamLibraryLocation.isEmpty()) {
-      return steamLibraryLocation + "\\" + "steamapps" + "\\" + "Starfield";
+      QString gameLocation = steamLibraryLocation + "\\" + "steamapps" + "\\" + "common" + "\\" + "Starfield";
+      if (QDir(gameLocation).exists() && QFile(gameLocation + "\\" + "Starfield.exe").exists())
+        return gameLocation;
     }
   }
   return "";

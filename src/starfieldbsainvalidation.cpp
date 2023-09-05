@@ -39,46 +39,36 @@ bool StarfieldBSAInvalidation::prepareProfile(MOBase::IProfile* profile)
   QString iniFilePath = basePath + "/" + m_IniFileName;
   WCHAR setting[MAX_PATH];
 
-  // write bInvalidateOlderFiles = 1, if needed
-  if (!::GetPrivateProfileStringW(L"General", L"bEnableMessageOfTheDay", L"1", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
-    || wcstol(setting, nullptr, 10) != 0) {
-    dirty = true;
-    if (!MOBase::WriteRegistryValue(L"General", L"bEnableMessageOfTheDay", L"0", iniFilePath.toStdWString().c_str())) {
-      qWarning("failed to override data directory in \"%s\"", qUtf8Printable(m_IniFileName));
-    }
-  }
-
-  QString dataDirName(m_Game->documentsDirectory().absolutePath() + "/" + "Data");
-  QString dataDirBackupName(profile->absolutePath() + "/" + "DocsData");
-  QDir dataDir(dataDirName);
-  QDir dataDirBackup(dataDirBackupName);
   if (profile->invalidationActive(nullptr)) {
-    if (!::GetPrivateProfileStringW(L"Display", L"sPhotoModeFolder", L"Data\\Textures\\Photos", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
-      || wcscmp(setting, L"Photos") != 0) {
+    // write bInvalidateOlderFiles = 1, if needed
+    if (!::GetPrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"0", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
+      || wcstol(setting, nullptr, 10) != 1) {
       dirty = true;
-      if (!MOBase::WriteRegistryValue(L"Display", L"sPhotoModeFolder", L"Photos", iniFilePath.toStdWString().c_str())) {
-        qWarning("failed to redirect photo directory in in \"%s\"", qUtf8Printable(m_IniFileName));
+      if (!MOBase::WriteRegistryValue(L"Archive", L"bInvalidateOlderFiles", L"1", iniFilePath.toStdWString().c_str())) {
+        qWarning("failed to override data directory in \"%s\"", qUtf8Printable(m_IniFileName));
       }
     }
-    if (dataDir.exists()) {
-      if (dataDirBackup.exists()) {
-        dataDirBackup.removeRecursively();
+    if (!::GetPrivateProfileStringW(L"Archive", L"sResourceDataDirsFinal", L"STRINGS\\", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
+      || wcscmp(setting, L"") != 0) {
+      dirty = true;
+      if (!MOBase::WriteRegistryValue(L"Archive", L"sResourceDataDirsFinal", L"", iniFilePath.toStdWString().c_str())) {
+        qWarning("failed to override data directory in \"%s\"", qUtf8Printable(m_IniFileName));
       }
-      dataDir.rename(dataDirName, dataDirBackupName);
     }
   } else {
-    if (::GetPrivateProfileStringW(L"Display", L"sPhotoModeFolder", L"Photos", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
-      || wcscmp(setting, L"Data\\Textures\\Photos") != 0) {
+    if (!::GetPrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"1", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
+      || wcstol(setting, nullptr, 10) != 0) {
       dirty = true;
-      if (!MOBase::WriteRegistryValue(L"Display", L"sPhotoModeFolder", L"Data\\Textures\\Photos", iniFilePath.toStdWString().c_str())) {
-        qWarning("failed to redirect photo directory in \"%s\"", qUtf8Printable(m_IniFileName));
+      if (!MOBase::WriteRegistryValue(L"Archive", L"bInvalidateOlderFiles", L"0", iniFilePath.toStdWString().c_str())) {
+        qWarning("failed to override data directory in \"%s\"", qUtf8Printable(m_IniFileName));
       }
     }
-    if (dataDirBackup.exists()) {
-      if (dataDir.exists()) {
-        dataDir.removeRecursively();
+    if (!::GetPrivateProfileStringW(L"Archive", L"sResourceDataDirsFinal", L"", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
+      || wcscmp(setting, L"STRINGS\\") != 0) {
+      dirty = true;
+      if (!MOBase::WriteRegistryValue(L"Archive", L"sResourceDataDirsFinal", L"STRINGS\\", iniFilePath.toStdWString().c_str())) {
+        qWarning("failed to override data directory in \"%s\"", qUtf8Printable(m_IniFileName));
       }
-      dataDir.rename(dataDirName, dataDirBackupName);
     }
   }
 
