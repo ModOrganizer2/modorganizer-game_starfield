@@ -94,6 +94,9 @@ QString GameStarfield::identifyGamePath() const
 
 QDir GameStarfield::dataDirectory() const
 {
+  QDir dataDir = documentsDirectory().absoluteFilePath("Data");
+  if (!dataDir.exists())
+    dataDir.mkdir(dataDir.path());
   return documentsDirectory().absoluteFilePath("Data");
 }
 
