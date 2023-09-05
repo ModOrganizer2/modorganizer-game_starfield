@@ -6,7 +6,6 @@
 #include "starfieldmoddatachecker.h"
 #include "starfieldmoddatacontent.h"
 #include "starfieldsavegame.h"
-#include "starfieldbsainvalidation.h"
 
 #include <pluginsetting.h>
 #include <executableinfo.h>
@@ -48,7 +47,6 @@ bool GameStarfield::init(IOrganizer *moInfo)
   registerFeature<SaveGameInfo>(new GamebryoSaveGameInfo(this));
   registerFeature<GamePlugins>(new CreationGamePlugins(moInfo));
   registerFeature<UnmanagedMods>(new StarfieldUnmangedMods(this));
-  registerFeature<BSAInvalidation>(new StarfieldBSAInvalidation(feature<DataArchives>(), this));
 
   return true;
 }
@@ -95,10 +93,10 @@ QDir GameStarfield::dataDirectory() const
   return documentsDirectory().absoluteFilePath("Data");
 }
 
-QList<QDir> GameStarfield::secondaryDataDirectories() const
+QMap<QString, QDir> GameStarfield::secondaryDataDirectories() const
 {
-  QList<QDir> directories;
-  directories.append(gameDirectory().absoluteFilePath("Data"));
+  QMap<QString, QDir> directories;
+  directories.insert("game_data", gameDirectory().absoluteFilePath("Data"));
   return directories;
 }
 
