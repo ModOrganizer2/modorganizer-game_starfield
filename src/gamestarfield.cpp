@@ -5,6 +5,7 @@
 #include "starfieldunmanagedmods.h"
 #include "starfieldmoddatachecker.h"
 #include "starfieldmoddatacontent.h"
+#include "starfieldgameplugins.h"
 #include "starfieldsavegame.h"
 #include "starfieldbsainvalidation.h"
 
@@ -12,7 +13,6 @@
 #include <executableinfo.h>
 #include <gamebryolocalsavegames.h>
 #include <gamebryosavegameinfo.h>
-#include <creationgameplugins.h>
 #include "versioninfo.h"
 
 #include <QCoreApplication>
@@ -46,7 +46,7 @@ bool GameStarfield::init(IOrganizer *moInfo)
   registerFeature<ModDataChecker>(new StarfieldModDataChecker(this));
   registerFeature<ModDataContent>(new StarfieldModDataContent(this));
   registerFeature<SaveGameInfo>(new GamebryoSaveGameInfo(this));
-  registerFeature<GamePlugins>(new CreationGamePlugins(moInfo));
+  registerFeature<GamePlugins>(new StarfieldGamePlugins(moInfo));
   registerFeature<UnmanagedMods>(new StarfieldUnmangedMods(this));
   registerFeature<BSAInvalidation>(new StarfieldBSAInvalidation(feature<DataArchives>(), this));
 
