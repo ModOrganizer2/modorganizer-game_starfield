@@ -55,21 +55,6 @@ bool StarfieldBSAInvalidation::prepareProfile(MOBase::IProfile* profile)
         qWarning("failed to override data directory in \"%s\"", qUtf8Printable(m_IniFileName));
       }
     }
-  } else {
-    if (!::GetPrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"1", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
-      || wcstol(setting, nullptr, 10) != 0) {
-      dirty = true;
-      if (!MOBase::WriteRegistryValue(L"Archive", L"bInvalidateOlderFiles", L"0", iniFilePath.toStdWString().c_str())) {
-        qWarning("failed to override data directory in \"%s\"", qUtf8Printable(m_IniFileName));
-      }
-    }
-    if (!::GetPrivateProfileStringW(L"Archive", L"sResourceDataDirsFinal", L"", setting, MAX_PATH, iniFilePath.toStdWString().c_str())
-      || wcscmp(setting, L"STRINGS\\") != 0) {
-      dirty = true;
-      if (!MOBase::WriteRegistryValue(L"Archive", L"sResourceDataDirsFinal", L"STRINGS\\", iniFilePath.toStdWString().c_str())) {
-        qWarning("failed to override data directory in \"%s\"", qUtf8Printable(m_IniFileName));
-      }
-    }
   }
 
   return dirty;
