@@ -188,7 +188,7 @@ QString GameStarfield::steamAPPId() const
 }
 
 QStringList GameStarfield::primaryPlugins() const {
-  QStringList plugins = { "Starfield.esm", "BlueprintShips-Starfield.esm", "Constellation.esm", "OldMars.esm" };
+  QStringList plugins = { "Starfield.esm", "Constellation.esm", "OldMars.esm", "BlueprintShips-Starfield.esm" };
 
   plugins.append(CCPlugins());
 
