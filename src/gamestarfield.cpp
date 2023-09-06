@@ -1,19 +1,19 @@
 #include "gamestarfield.h"
 
+#include "starfieldbsainvalidation.h"
 #include "starfielddataarchives.h"
-#include "starfieldscriptextender.h"
-#include "starfieldunmanagedmods.h"
+#include "starfieldgameplugins.h"
 #include "starfieldmoddatachecker.h"
 #include "starfieldmoddatacontent.h"
-#include "starfieldgameplugins.h"
 #include "starfieldsavegame.h"
-#include "starfieldbsainvalidation.h"
+#include "starfieldscriptextender.h"
+#include "starfieldunmanagedmods.h"
 
-#include <pluginsetting.h>
+#include "versioninfo.h"
 #include <executableinfo.h>
 #include <gamebryolocalsavegames.h>
 #include <gamebryosavegameinfo.h>
-#include "versioninfo.h"
+#include <pluginsetting.h>
 
 #include <QCoreApplication>
 #include <QDir>
@@ -30,11 +30,9 @@
 
 using namespace MOBase;
 
-GameStarfield::GameStarfield()
-{
-}
+GameStarfield::GameStarfield() {}
 
-bool GameStarfield::init(IOrganizer *moInfo)
+bool GameStarfield::init(IOrganizer* moInfo)
 {
   if (!GameGamebryo::init(moInfo)) {
     return false;
@@ -42,13 +40,15 @@ bool GameStarfield::init(IOrganizer *moInfo)
 
   registerFeature<ScriptExtender>(new StarfieldScriptExtender(this));
   registerFeature<DataArchives>(new StarfieldDataArchives(myGamesPath()));
-  registerFeature<LocalSavegames>(new GamebryoLocalSavegames(myGamesPath(), "StarfieldCustom.ini"));
+  registerFeature<LocalSavegames>(
+      new GamebryoLocalSavegames(myGamesPath(), "StarfieldCustom.ini"));
   registerFeature<ModDataChecker>(new StarfieldModDataChecker(this));
   registerFeature<ModDataContent>(new StarfieldModDataContent(this));
   registerFeature<SaveGameInfo>(new GamebryoSaveGameInfo(this));
   registerFeature<GamePlugins>(new StarfieldGamePlugins(moInfo));
   registerFeature<UnmanagedMods>(new StarfieldUnmangedMods(this));
-  registerFeature<BSAInvalidation>(new StarfieldBSAInvalidation(feature<DataArchives>(), this));
+  registerFeature<BSAInvalidation>(
+      new StarfieldBSAInvalidation(feature<DataArchives>(), this));
 
   return true;
 }
@@ -60,23 +60,25 @@ QString GameStarfield::gameName() const
 
 void GameStarfield::detectGame()
 {
-  m_GamePath = identifyGamePath();
+  m_GamePath    = identifyGamePath();
   m_MyGamesPath = determineMyGamesPath("Starfield");
 }
 
 QString GameStarfield::identifyGamePath() const
 {
   QString path = "Software\\Valve\\Steam";
-  QString steamLocation = findInRegistry(HKEY_CURRENT_USER, path.toStdWString().c_str(), L"SteamPath");
+  QString steamLocation =
+      findInRegistry(HKEY_CURRENT_USER, path.toStdWString().c_str(), L"SteamPath");
   if (!steamLocation.isEmpty()) {
     QString steamLibraryLocation;
-    QString steamLibraries(steamLocation + "\\" + "config" + "\\" + "libraryfolders.vdf");
+    QString steamLibraries(steamLocation + "\\" + "config" + "\\" +
+                           "libraryfolders.vdf");
     if (QFile(steamLibraries).exists()) {
       std::ifstream file(steamLibraries.toStdString());
       auto root = tyti::vdf::read(file);
       for (auto child : root.childs) {
-        tyti::vdf::object *library = child.second.get();
-        auto apps = library->childs["apps"];
+        tyti::vdf::object* library = child.second.get();
+        auto apps                  = library->childs["apps"];
         if (apps->attribs.contains(steamAPPId().toStdString())) {
           steamLibraryLocation = QString::fromStdString(library->attribs["path"]);
           break;
@@ -84,8 +86,10 @@ QString GameStarfield::identifyGamePath() const
       }
     }
     if (!steamLibraryLocation.isEmpty()) {
-      QString gameLocation = steamLibraryLocation + "\\" + "steamapps" + "\\" + "common" + "\\" + "Starfield";
-      if (QDir(gameLocation).exists() && QFile(gameLocation + "\\" + "Starfield.exe").exists())
+      QString gameLocation = steamLibraryLocation + "\\" + "steamapps" + "\\" +
+                             "common" + "\\" + "Starfield";
+      if (QDir(gameLocation).exists() &&
+          QFile(gameLocation + "\\" + "Starfield.exe").exists())
         return gameLocation;
     }
   }
@@ -110,9 +114,9 @@ QMap<QString, QDir> GameStarfield::secondaryDataDirectories() const
 QList<ExecutableInfo> GameStarfield::executables() const
 {
   return QList<ExecutableInfo>()
-    << ExecutableInfo("SFSE", findInGameFolder(feature<ScriptExtender>()->loaderName()))
-    << ExecutableInfo("Starfield", findInGameFolder(binaryName()))
-       ;
+         << ExecutableInfo("SFSE",
+                           findInGameFolder(feature<ScriptExtender>()->loaderName()))
+         << ExecutableInfo("Starfield", findInGameFolder(binaryName()));
 }
 
 QList<ExecutableForcedLoadSetting> GameStarfield::executableForcedLoads() const
@@ -129,7 +133,6 @@ QString GameStarfield::localizedName() const
 {
   return tr("Starfield Support Plugin");
 }
-
 
 QString GameStarfield::author() const
 {
@@ -151,16 +154,17 @@ QList<PluginSetting> GameStarfield::settings() const
   return QList<PluginSetting>();
 }
 
-void GameStarfield::initializeProfile(const QDir &path, ProfileSettings settings) const
+void GameStarfield::initializeProfile(const QDir& path, ProfileSettings settings) const
 {
   if (settings.testFlag(IPluginGame::MODS)) {
     copyToProfile(localAppFolder() + "/Starfield", path, "plugins.txt");
   }
 
   if (settings.testFlag(IPluginGame::CONFIGURATION)) {
-    if (settings.testFlag(IPluginGame::PREFER_DEFAULTS)
-        || !QFileInfo(myGamesPath() + "/Starfield.ini").exists()) {
-      copyToProfile(gameDirectory().absolutePath(), path, "StarfieldDefault.ini", "Starfield.ini");
+    if (settings.testFlag(IPluginGame::PREFER_DEFAULTS) ||
+        !QFileInfo(myGamesPath() + "/Starfield.ini").exists()) {
+      copyToProfile(gameDirectory().absolutePath(), path, "StarfieldDefault.ini",
+                    "Starfield.ini");
     } else {
       copyToProfile(myGamesPath(), path, "Starfield.ini");
     }
@@ -180,7 +184,8 @@ QString GameStarfield::savegameSEExtension() const
   return "sfse";
 }
 
-std::shared_ptr<const GamebryoSaveGame> GameStarfield::makeSaveGame(QString filePath) const
+std::shared_ptr<const GamebryoSaveGame>
+GameStarfield::makeSaveGame(QString filePath) const
 {
   return std::make_shared<const StarfieldSaveGame>(filePath, this);
 }
@@ -190,8 +195,10 @@ QString GameStarfield::steamAPPId() const
   return "1716740";
 }
 
-QStringList GameStarfield::primaryPlugins() const {
-  QStringList plugins = { "Starfield.esm", "Constellation.esm", "OldMars.esm", "BlueprintShips-Starfield.esm" };
+QStringList GameStarfield::primaryPlugins() const
+{
+  QStringList plugins = {"Starfield.esm", "Constellation.esm", "OldMars.esm",
+                         "BlueprintShips-Starfield.esm"};
 
   plugins.append(CCPlugins());
 
@@ -200,7 +207,7 @@ QStringList GameStarfield::primaryPlugins() const {
 
 QStringList GameStarfield::gameVariants() const
 {
-  return { "Regular" };
+  return {"Regular"};
 }
 
 QString GameStarfield::gameShortName() const
@@ -215,7 +222,7 @@ QString GameStarfield::gameNexusName() const
 
 QStringList GameStarfield::iniFiles() const
 {
-  return { "Starfield.ini", "StarfieldPrefs.ini", "StarfieldCustom.ini" };
+  return {"Starfield.ini", "StarfieldPrefs.ini", "StarfieldCustom.ini"};
 }
 
 QStringList GameStarfield::DLCPlugins() const
@@ -228,7 +235,9 @@ QStringList GameStarfield::CCPlugins() const
   QStringList plugins = {};
   QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
   if (file.open(QIODevice::ReadOnly)) {
-    ON_BLOCK_EXIT([&file]() { file.close(); });
+    ON_BLOCK_EXIT([&file]() {
+      file.close();
+    });
 
     if (file.size() == 0) {
       return plugins;

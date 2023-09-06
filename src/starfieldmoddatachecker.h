@@ -9,20 +9,21 @@ public:
   using GamebryoModDataChecker::GamebryoModDataChecker;
 
 protected:
-  virtual const FileNameSet& possibleFolderNames() const override {
+  virtual const FileNameSet& possibleFolderNames() const override
+  {
     static FileNameSet result{
-      "interface", "meshes", "music", "scripts", "sound", "strings", "textures", 
-      "trees", "video", "materials", "sfse", "distantlod", "asi", "Tools", "MCM",
-      "distantland", "mits", "dllplugins", "CalienteTools", "shadersfx", "aaf"
-    };
+        "interface",     "meshes",    "music", "scripts",     "sound", "strings",
+        "textures",      "trees",     "video", "materials",   "sfse",  "distantlod",
+        "asi",           "Tools",     "MCM",   "distantland", "mits",  "dllplugins",
+        "CalienteTools", "shadersfx", "aaf"};
     return result;
   }
-  virtual const FileNameSet& possibleFileExtensions() const override {
-    static FileNameSet result{
-      "esp", "esm", "esl", "ba2", "modgroups", "ini", "csg", "cdx"
-    };
+  virtual const FileNameSet& possibleFileExtensions() const override
+  {
+    static FileNameSet result{"esp",       "esm", "esl", "ba2",
+                              "modgroups", "ini", "csg", "cdx"};
     return result;
   }
 };
 
-#endif // STARFIELD_MODATACHECKER_H
+#endif  // STARFIELD_MODATACHECKER_H

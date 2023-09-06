@@ -10,13 +10,10 @@ class StarfieldGamePlugins : public CreationGamePlugins
 {
 
 public:
-
-    StarfieldGamePlugins(MOBase::IOrganizer* organizer);
+  StarfieldGamePlugins(MOBase::IOrganizer* organizer);
 
 protected:
-
-    virtual bool overridePluginsAreSupported() override;
-
+  virtual bool overridePluginsAreSupported() override;
 };
 
-#endif // _STARFIELDGAMEPLUGINS_H
+#endif  // _STARFIELDGAMEPLUGINS_H
