@@ -202,6 +202,25 @@ QStringList GameStarfield::primaryPlugins() const
 
   plugins.append(CCPlugins());
 
+  if (m_Organizer != nullptr && m_Organizer->profile() != nullptr) {
+    QString customIni(
+        m_Organizer->profile()->absoluteIniFilePath("StarfieldCustom.ini"));
+    if (QFile(customIni).exists()) {
+      for (int i = 1; i <= 10; ++i) {
+        QString setting("sTestFile");
+        setting += std::to_string(i);
+        WCHAR value[MAX_PATH];
+        DWORD length = ::GetPrivateProfileStringW(
+            L"General", setting.toStdWString().c_str(), L"", value, MAX_PATH,
+            customIni.toStdWString().c_str());
+        if (length && wcscmp(value, L"") != 0) {
+          QString plugin = QString::fromWCharArray(value, length);
+          plugins.append(plugin);
+        }
+      }
+    }
+  }
+
   return plugins;
 }
 
@@ -261,7 +280,7 @@ QStringList GameStarfield::CCPlugins() const
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 {
-  return IPluginGame::LoadOrderMechanism::PluginsTxt;
+  return IPluginGame::LoadOrderMechanism::None;
 }
 
 int GameStarfield::nexusModOrganizerID() const
