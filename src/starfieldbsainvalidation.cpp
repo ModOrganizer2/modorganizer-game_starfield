@@ -17,7 +17,7 @@ StarfieldBSAInvalidation::StarfieldBSAInvalidation(DataArchives* dataArchives,
 
 bool StarfieldBSAInvalidation::isInvalidationBSA(const QString& bsaName)
 {
-  return true;
+  return false;
 }
 
 QString StarfieldBSAInvalidation::invalidationBSAName() const

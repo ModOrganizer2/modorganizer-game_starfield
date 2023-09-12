@@ -3,8 +3,9 @@
 #include "iprofile.h"
 #include <utility.h>
 
-StarfieldDataArchives::StarfieldDataArchives(const QDir& myGamesDir)
-    : GamebryoDataArchives(myGamesDir)
+StarfieldDataArchives::StarfieldDataArchives(const QDir& myGamesDir,
+                                             const QDir& gamePath)
+    : GamebryoDataArchives(myGamesDir), m_GamePath(gamePath.absolutePath())
 {}
 
 QStringList StarfieldDataArchives::vanillaArchives() const
@@ -70,10 +71,7 @@ QStringList StarfieldDataArchives::archives(const MOBase::IProfile* profile) con
 {
   QStringList result;
 
-  QString iniFile =
-      profile->localSettingsEnabled()
-          ? QDir(profile->absolutePath()).absoluteFilePath("Starfield.ini")
-          : m_LocalGameDir.absoluteFilePath("Starfield.ini");
+  QString iniFile = m_GamePath.absoluteFilePath("Starfield.ini");
   result.append(getArchivesFromKey(iniFile, "SResourceArchiveList"));
   result.append(getArchivesFromKey(iniFile, "sResourceIndexFileList"));
   result.append(getArchivesFromKey(iniFile, "SResourceArchiveMemoryCacheList"));

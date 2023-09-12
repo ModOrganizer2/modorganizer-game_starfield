@@ -15,11 +15,14 @@ class StarfieldDataArchives : public GamebryoDataArchives
 {
 
 public:
-  StarfieldDataArchives(const QDir& myGamesDir);
+  StarfieldDataArchives(const QDir& myGamesDir, const QDir& gamePath);
 
 public:
   virtual QStringList vanillaArchives() const override;
   virtual QStringList archives(const MOBase::IProfile* profile) const override;
+
+protected:
+  const QDir m_GamePath;
 
 private:
   virtual void writeArchiveList(MOBase::IProfile* profile,

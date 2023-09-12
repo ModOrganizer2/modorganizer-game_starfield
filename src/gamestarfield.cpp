@@ -39,7 +39,8 @@ bool GameStarfield::init(IOrganizer* moInfo)
   }
 
   registerFeature<ScriptExtender>(new StarfieldScriptExtender(this));
-  registerFeature<DataArchives>(new StarfieldDataArchives(myGamesPath()));
+  registerFeature<DataArchives>(
+      new StarfieldDataArchives(myGamesPath(), gameDirectory()));
   registerFeature<LocalSavegames>(
       new GamebryoLocalSavegames(myGamesPath(), "StarfieldCustom.ini"));
   registerFeature<ModDataChecker>(new StarfieldModDataChecker(this));
@@ -163,7 +164,7 @@ void GameStarfield::initializeProfile(const QDir& path, ProfileSettings settings
   if (settings.testFlag(IPluginGame::CONFIGURATION)) {
     if (settings.testFlag(IPluginGame::PREFER_DEFAULTS) ||
         !QFileInfo(myGamesPath() + "/Starfield.ini").exists()) {
-      copyToProfile(gameDirectory().absolutePath(), path, "StarfieldDefault.ini",
+      copyToProfile(gameDirectory().absolutePath(), path, "Starfield.ini",
                     "Starfield.ini");
     } else {
       copyToProfile(myGamesPath(), path, "Starfield.ini");

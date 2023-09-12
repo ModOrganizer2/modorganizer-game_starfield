@@ -4,12 +4,12 @@
 <context>
     <name>GameStarfield</name>
     <message>
-        <location filename="gamestarfield.cpp" line="134"/>
+        <location filename="gamestarfield.cpp" line="135"/>
         <source>Starfield Support Plugin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="144"/>
+        <location filename="gamestarfield.cpp" line="145"/>
         <source>Adds support for the game Starfield.</source>
         <translation type="unfinished"></translation>
     </message>
