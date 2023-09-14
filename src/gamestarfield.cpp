@@ -159,17 +159,6 @@ void GameStarfield::initializeProfile(const QDir& path, ProfileSettings settings
 {
   if (settings.testFlag(IPluginGame::MODS)) {
     copyToProfile(localAppFolder() + "/Starfield", path, "plugins.txt");
-  }
-
-  if (settings.testFlag(IPluginGame::CONFIGURATION)) {
-    if (settings.testFlag(IPluginGame::PREFER_DEFAULTS) ||
-        !QFileInfo(myGamesPath() + "/Starfield.ini").exists()) {
-      copyToProfile(gameDirectory().absolutePath(), path, "Starfield.ini",
-                    "Starfield.ini");
-    } else {
-      copyToProfile(myGamesPath(), path, "Starfield.ini");
-    }
-
     copyToProfile(myGamesPath(), path, "StarfieldPrefs.ini");
     copyToProfile(myGamesPath(), path, "StarfieldCustom.ini");
   }
@@ -242,7 +231,7 @@ QString GameStarfield::gameNexusName() const
 
 QStringList GameStarfield::iniFiles() const
 {
-  return {"Starfield.ini", "StarfieldPrefs.ini", "StarfieldCustom.ini"};
+  return {"StarfieldPrefs.ini", "StarfieldCustom.ini"};
 }
 
 QStringList GameStarfield::DLCPlugins() const
