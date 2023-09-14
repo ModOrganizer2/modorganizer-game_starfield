@@ -234,6 +234,11 @@ QStringList GameStarfield::iniFiles() const
   return {"StarfieldPrefs.ini", "StarfieldCustom.ini"};
 }
 
+bool GameStarfield::prepareIni(const QString& exec)
+{
+  return true;  // no need to write to Starfield.ini
+}
+
 QStringList GameStarfield::DLCPlugins() const
 {
   return {};
