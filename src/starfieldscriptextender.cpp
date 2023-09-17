@@ -3,10 +3,9 @@
 #include <QString>
 #include <QStringList>
 
-StarfieldScriptExtender::StarfieldScriptExtender(GameGamebryo const *game) :
-  GamebryoScriptExtender(game)
-{
-}
+StarfieldScriptExtender::StarfieldScriptExtender(GameGamebryo const* game)
+    : GamebryoScriptExtender(game)
+{}
 
 QString StarfieldScriptExtender::BinaryName() const
 {
