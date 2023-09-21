@@ -273,6 +273,11 @@ QStringList GameStarfield::CCPlugins() const
   return plugins;
 }
 
+IPluginGame::SortMechanism GameStarfield::sortMechanism() const
+{
+  return IPluginGame::SortMechanism::NONE;
+}
+
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 {
   return IPluginGame::LoadOrderMechanism::None;
