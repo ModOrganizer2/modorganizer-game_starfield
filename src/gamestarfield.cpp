@@ -147,7 +147,7 @@ QString GameStarfield::description() const
 
 MOBase::VersionInfo GameStarfield::version() const
 {
-  return VersionInfo(0, 0, 1, VersionInfo::RELEASE_PREALPHA);
+  return VersionInfo(0, 5, 0, VersionInfo::RELEASE_BETA);
 }
 
 QList<PluginSetting> GameStarfield::settings() const
@@ -155,7 +155,8 @@ QList<PluginSetting> GameStarfield::settings() const
   return QList<PluginSetting>()
          << PluginSetting("enable_plugin_management",
                           tr("Turn on plugin management. As of Starfield 1.7.33 this "
-                             "REQUIRES SPECIAL WORKAROUNDS."),
+                             "REQUIRES fixing 'plugins.txt' with a SFSE plugin. This "
+                             "will do nothing otherwise."),
                           false);
 }
 
