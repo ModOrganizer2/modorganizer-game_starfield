@@ -152,7 +152,24 @@ MOBase::VersionInfo GameStarfield::version() const
 
 QList<PluginSetting> GameStarfield::settings() const
 {
-  return QList<PluginSetting>();
+  return QList<PluginSetting>()
+         << PluginSetting("enable_plugin_management",
+                          tr("Turn on plugin management. As of Starfield 1.7.33 this "
+                             "REQUIRES SPECIAL WORKAROUNDS."),
+                          false);
+}
+
+MappingType GameStarfield::mappings() const
+{
+  MappingType result;
+  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool()) {
+    for (const QString& profileFile : {"plugins.txt", "loadorder.txt"}) {
+      result.push_back({m_Organizer->profilePath() + "/" + profileFile,
+                        localAppFolder() + "/" + gameShortName() + "/" + profileFile,
+                        false});
+    }
+  }
+  return result;
 }
 
 void GameStarfield::initializeProfile(const QDir& path, ProfileSettings settings) const
@@ -280,6 +297,9 @@ IPluginGame::SortMechanism GameStarfield::sortMechanism() const
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 {
+  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool()) {
+    return IPluginGame::LoadOrderMechanism::PluginsTxt;
+  }
   return IPluginGame::LoadOrderMechanism::None;
 }
 
