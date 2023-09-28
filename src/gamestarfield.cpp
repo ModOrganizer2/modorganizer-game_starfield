@@ -26,7 +26,6 @@
 #include <memory>
 
 #include "scopeguard.h"
-#include "vdf_parser.h"
 
 using namespace MOBase;
 
@@ -67,34 +66,7 @@ void GameStarfield::detectGame()
 
 QString GameStarfield::identifyGamePath() const
 {
-  QString path = "Software\\Valve\\Steam";
-  QString steamLocation =
-      findInRegistry(HKEY_CURRENT_USER, path.toStdWString().c_str(), L"SteamPath");
-  if (!steamLocation.isEmpty()) {
-    QString steamLibraryLocation;
-    QString steamLibraries(steamLocation + "\\" + "config" + "\\" +
-                           "libraryfolders.vdf");
-    if (QFile(steamLibraries).exists()) {
-      std::ifstream file(steamLibraries.toStdString());
-      auto root = tyti::vdf::read(file);
-      for (auto child : root.childs) {
-        tyti::vdf::object* library = child.second.get();
-        auto apps                  = library->childs["apps"];
-        if (apps->attribs.contains(steamAPPId().toStdString())) {
-          steamLibraryLocation = QString::fromStdString(library->attribs["path"]);
-          break;
-        }
-      }
-    }
-    if (!steamLibraryLocation.isEmpty()) {
-      QString gameLocation = steamLibraryLocation + "\\" + "steamapps" + "\\" +
-                             "common" + "\\" + "Starfield";
-      if (QDir(gameLocation).exists() &&
-          QFile(gameLocation + "\\" + "Starfield.exe").exists())
-        return gameLocation;
-    }
-  }
-  return "";
+  return parseSteamLocation(steamAPPId());
 }
 
 QDir GameStarfield::dataDirectory() const
