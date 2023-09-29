@@ -66,7 +66,7 @@ void GameStarfield::detectGame()
 
 QString GameStarfield::identifyGamePath() const
 {
-  return parseSteamLocation(steamAPPId());
+  return parseSteamLocation(steamAPPId(), gameName());
 }
 
 QDir GameStarfield::dataDirectory() const
