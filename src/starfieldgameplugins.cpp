@@ -19,3 +19,12 @@ void StarfieldGamePlugins::writePluginList(const IPluginList* pluginList,
     CreationGamePlugins::writePluginList(pluginList, filePath);
   }
 }
+
+QStringList StarfieldGamePlugins::readPluginList(MOBase::IPluginList* pluginList)
+{
+  if (m_Organizer->managedGame()->sortMechanism() !=
+      MOBase::IPluginGame::SortMechanism::NONE) {
+    return CreationGamePlugins::readPluginList(pluginList);
+  }
+  return {};
+}
