@@ -16,6 +16,7 @@ protected:
   virtual bool overridePluginsAreSupported() override;
   virtual void writePluginList(const MOBase::IPluginList* pluginList,
                                const QString& filePath) override;
+  virtual QStringList readPluginList(MOBase::IPluginList* pluginList) override;
 };
 
 #endif  // _STARFIELDGAMEPLUGINS_H

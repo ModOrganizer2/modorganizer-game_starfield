@@ -17,6 +17,9 @@ public:
 
   virtual bool init(MOBase::IOrganizer* moInfo) override;
 
+public:
+  QStringList testFilePlugins() const;
+
 public:  // IPluginGame interface
   virtual QString gameName() const override;
   virtual void detectGame() override;
@@ -29,6 +32,7 @@ public:  // IPluginGame interface
                                  ProfileSettings settings) const override;
   virtual QString steamAPPId() const override;
   virtual QStringList primaryPlugins() const override;
+  virtual QStringList enabledPlugins() const override;
   virtual QStringList gameVariants() const override;
   virtual QString gameShortName() const override;
   virtual QString gameNexusName() const override;

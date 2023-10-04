@@ -135,7 +135,8 @@ QList<PluginSetting> GameStarfield::settings() const
 MappingType GameStarfield::mappings() const
 {
   MappingType result;
-  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool()) {
+  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool() &&
+      testFilePlugins().isEmpty()) {
     for (const QString& profileFile : {"plugins.txt", "loadorder.txt"}) {
       result.push_back({m_Organizer->profilePath() + "/" + profileFile,
                         localAppFolder() + "/" + gameShortName() + "/" + profileFile,
@@ -175,13 +176,9 @@ QString GameStarfield::steamAPPId() const
   return "1716740";
 }
 
-QStringList GameStarfield::primaryPlugins() const
+QStringList GameStarfield::testFilePlugins() const
 {
-  QStringList plugins = {"Starfield.esm", "Constellation.esm", "OldMars.esm",
-                         "BlueprintShips-Starfield.esm"};
-
-  plugins.append(CCPlugins());
-
+  QStringList plugins;
   if (m_Organizer != nullptr && m_Organizer->profile() != nullptr) {
     QString customIni(
         m_Organizer->profile()->absoluteIniFilePath("StarfieldCustom.ini"));
@@ -195,13 +192,34 @@ QStringList GameStarfield::primaryPlugins() const
             customIni.toStdWString().c_str());
         if (length && wcscmp(value, L"") != 0) {
           QString plugin = QString::fromWCharArray(value, length);
-          plugins.append(plugin);
+          if (!plugin.isEmpty() && !plugins.contains(plugin))
+            plugins.append(plugin);
         }
       }
     }
   }
+  return plugins;
+}
+
+QStringList GameStarfield::primaryPlugins() const
+{
+  QStringList plugins = {"Starfield.esm", "Constellation.esm", "OldMars.esm"};
+
+  auto testPlugins = testFilePlugins();
+
+  if (!testPlugins.isEmpty()) {
+    plugins += enabledPlugins();
+    plugins += testPlugins;
+  } else {
+    plugins.append(CCPlugins());
+  }
 
   return plugins;
+}
+
+QStringList GameStarfield::enabledPlugins() const
+{
+  return {"BlueprintShips-Starfield.esm"};
 }
 
 QStringList GameStarfield::gameVariants() const
@@ -265,14 +283,17 @@ QStringList GameStarfield::CCPlugins() const
 
 IPluginGame::SortMechanism GameStarfield::sortMechanism() const
 {
+  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool() &&
+      testFilePlugins().isEmpty())
+    return IPluginGame::SortMechanism::LOOT;
   return IPluginGame::SortMechanism::NONE;
 }
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 {
-  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool()) {
+  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool() &&
+      testFilePlugins().isEmpty())
     return IPluginGame::LoadOrderMechanism::PluginsTxt;
-  }
   return IPluginGame::LoadOrderMechanism::None;
 }
 

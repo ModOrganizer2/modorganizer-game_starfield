@@ -14,10 +14,17 @@ bool StarfieldGamePlugins::overridePluginsAreSupported()
 void StarfieldGamePlugins::writePluginList(const IPluginList* pluginList,
                                            const QString& filePath)
 {
-  if (m_Organizer
-          ->pluginSetting(m_Organizer->managedGame()->name(),
-                          "enable_plugin_management")
-          .toBool()) {
+  if (m_Organizer->managedGame()->sortMechanism() !=
+      MOBase::IPluginGame::SortMechanism::NONE) {
     CreationGamePlugins::writePluginList(pluginList, filePath);
   }
+}
+
+QStringList StarfieldGamePlugins::readPluginList(MOBase::IPluginList* pluginList)
+{
+  if (m_Organizer->managedGame()->sortMechanism() !=
+      MOBase::IPluginGame::SortMechanism::NONE) {
+    return CreationGamePlugins::readPluginList(pluginList);
+  }
+  return {};
 }
