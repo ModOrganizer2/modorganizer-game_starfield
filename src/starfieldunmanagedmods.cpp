@@ -10,7 +10,7 @@ QStringList StarfieldUnmangedMods::mods(bool onlyOfficial) const
 {
   QStringList result;
 
-  QStringList pluginList   = game()->primaryPlugins();
+  QStringList pluginList   = game()->primaryPlugins() + game()->enabledPlugins();
   QStringList otherPlugins = game()->DLCPlugins();
   otherPlugins.append(game()->CCPlugins());
   for (QString plugin : otherPlugins) {
