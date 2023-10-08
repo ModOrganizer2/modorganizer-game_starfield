@@ -299,10 +299,10 @@ IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 
 int GameStarfield::nexusModOrganizerID() const
 {
-  return 28715;
+  return 0;
 }
 
 int GameStarfield::nexusGameID() const
 {
-  return 1151;
+  return 4187;
 }
