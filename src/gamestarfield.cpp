@@ -89,7 +89,9 @@ QList<ExecutableInfo> GameStarfield::executables() const
   return QList<ExecutableInfo>()
          << ExecutableInfo("SFSE",
                            findInGameFolder(feature<ScriptExtender>()->loaderName()))
-         << ExecutableInfo("Starfield", findInGameFolder(binaryName()));
+         << ExecutableInfo("Starfield", findInGameFolder(binaryName()))
+         << ExecutableInfo("LOOT", QFileInfo(getLootPath()))
+                .withArgument("--game=\"Starfield\"");
 }
 
 QList<ExecutableForcedLoadSetting> GameStarfield::executableForcedLoads() const
