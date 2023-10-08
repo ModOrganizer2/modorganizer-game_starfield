@@ -206,12 +206,11 @@ QStringList GameStarfield::primaryPlugins() const
   QStringList plugins = {"Starfield.esm", "Constellation.esm", "OldMars.esm"};
 
   auto testPlugins = testFilePlugins();
-
-  if (!testPlugins.isEmpty()) {
-    plugins += enabledPlugins();
-    plugins += testPlugins;
+  if (loadOrderMechanism() == LoadOrderMechanism::None) {
+    plugins << enabledPlugins();
+    plugins << testPlugins;
   } else {
-    plugins.append(CCPlugins());
+    plugins << CCPlugins();
   }
 
   return plugins;
