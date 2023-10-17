@@ -444,14 +444,15 @@ QString GameStarfield::fullDescription(unsigned int key) const
   switch (key) {
   case PROBLEM_ESP: {
     QString espInfo = SetJoin(m_Active_ESPs, ", ");
-    return tr("<p>ESP plugins are not ideal for Starfield. They cannot be sorted "
-              "alongside ESM or master-flagged plugins and always have their records "
-              "loaded by the game, taking up unnecessary space in memory.</p>"
+    return tr("<p>ESP plugins are not ideal for Starfield. In addition to being unable "
+              "to sort them alongside ESM or master-flagged plugins, certain record "
+              "references are always kept loaded by the game. This consumes "
+              "unnecessary resources and limits the game's ability to load what it "
+              "needs.</p>"
               "<p>Ideally, plugins should be saved as ESM files upon release. It can "
-              "also "
-              "be released as an ESL plugin, however there are additional concerns "
-              "with the way light plugins are currently handled and should only be "
-              "used when absolutely certain about what you're doing.</p>"
+              "also be released as an ESL plugin, however there are additional "
+              "concerns with the way light plugins are currently handled and should "
+              "only be used when absolutely certain about what you're doing.</p>"
               "<p>Notably, xEdit does not currently support saving ESP files.</p>"
               "<h4>Current ESPs:</h4><p>%1</p>")
         .arg(espInfo);
@@ -459,26 +460,25 @@ QString GameStarfield::fullDescription(unsigned int key) const
   case PROBLEM_ESL: {
     QString eslInfo = SetJoin(m_Active_ESLs, ", ");
     return tr("<p>Light plugins work differently in Starfield. They use a different "
-              "base "
-              "form ID compared with standard plugin files.</p>"
+              "base form ID compared with standard plugin files.</p>"
               "<p>What this means is that you can't just change a standard plugin to a "
               "light plugin at will, it can and will break any dependent plugin. If "
               "you do so, be absolutely certain no other plugins use that plugin as a "
               "master.</p>"
-              "<p>Notably, xEdit does not currently support saving ESL files.<p>"
+              "<p>Notably, xEdit does not currently support saving or loading ESL "
+              "files under these conditions.<p>"
               "<h4>Current ESLs:</h4><p>%1</p>")
         .arg(eslInfo);
   }
   case PROBLEM_OVERLAY: {
     QString overlayInfo = SetJoin(m_Active_Overlays, ", ");
     return tr("<p>Overlay-flagged plugins are not currently recommended. In theory, "
-              "they "
-              "should allow you to update existing records without utilizing "
-              "additional memory space. Unfortunately, it appears that the game still "
-              "allocates memory as if these were standard plugins. Therefore, at the "
-              "moment there is no real use for this plugin flag.</p>"
-              "<p>Notably, xEdit does not currently support saving overlay-flagged "
-              "files.</p>"
+              "they should allow you to update existing records without utilizing "
+              "additional load order slots. Unfortunately, it appears that the game "
+              "still allocates the slots as if these were standard plugins. Therefore, "
+              "at the moment there is no real use for this plugin flag.</p>"
+              "<p>Notably, xEdit does not currently support saving or loading "
+              "overlay-flagged files under these conditions.</p>"
               "<h4>Current Overlays:</h4><p>%1</p>")
         .arg(overlayInfo);
   }
