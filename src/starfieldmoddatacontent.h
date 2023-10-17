@@ -10,7 +10,8 @@ protected:
   enum StarfieldContent
   {
     CONTENT_MATERIAL   = CONTENT_NEXT_VALUE,
-    CONTENT_GEOMETRIES = CONTENT_NEXT_VALUE + 1
+    CONTENT_GEOMETRIES = CONTENT_NEXT_VALUE + 1,
+    CONTENT_VIDEO      = CONTENT_NEXT_VALUE + 2
   };
 
 public:
@@ -26,7 +27,8 @@ public:
   {
     static std::vector<Content> STARFIELD_CONTENTS{
         {CONTENT_MATERIAL, QT_TR_NOOP("Materials"), ":/MO/gui/content/material"},
-        {CONTENT_GEOMETRIES, QT_TR_NOOP("Geometries"), ":/MO/gui/content/mesh"}};
+        {CONTENT_GEOMETRIES, QT_TR_NOOP("Geometries"), ":/MO/gui/content/geometries"},
+        {CONTENT_VIDEO, QT_TR_NOOP("Video"), ":/MO/gui/content/media"}};
     auto contents = GamebryoModDataContent::getAllContents();
     std::copy(std::begin(STARFIELD_CONTENTS), std::end(STARFIELD_CONTENTS),
               std::back_inserter(contents));
@@ -43,6 +45,8 @@ public:
           contents.push_back(CONTENT_MATERIAL);
         } else if (e->compare("geometries") == 0) {
           contents.push_back(CONTENT_GEOMETRIES);
+        } else if (e->compare("video") == 0) {
+          contents.push_back(CONTENT_VIDEO);
         }
       }
     }
