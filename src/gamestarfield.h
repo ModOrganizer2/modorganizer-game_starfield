@@ -2,14 +2,15 @@
 #define GAMESTARFIELD_H
 
 #include "gamegamebryo.h"
+#include "iplugindiagnose.h"
 
 #include <QObject>
 #include <QtGlobal>
 
-class GameStarfield : public GameGamebryo
+class GameStarfield : public GameGamebryo, public MOBase::IPluginDiagnose
 {
   Q_OBJECT
-
+  Q_INTERFACES(MOBase::IPlugin MOBase::IPluginGame MOBase::IPluginDiagnose)
   Q_PLUGIN_METADATA(IID "org.modorganizer.GameStarfield" FILE "gamestarfield.json")
 
 public:
@@ -45,6 +46,13 @@ public:  // IPluginGame interface
   virtual int nexusModOrganizerID() const override;
   virtual int nexusGameID() const override;
 
+public:  // IPluginDiagnose interface
+  virtual std::vector<unsigned int> activeProblems() const override;
+  virtual QString shortDescription(unsigned int key) const override;
+  virtual QString fullDescription(unsigned int key) const override;
+  virtual bool hasGuidedFix(unsigned int key) const override;
+  virtual void startGuidedFix(unsigned int key) const override;
+
 public:  // IPlugin interface
   virtual QString name() const override;
   virtual QString localizedName() const override;
@@ -59,6 +67,24 @@ protected:
   std::shared_ptr<const GamebryoSaveGame> makeSaveGame(QString filePath) const override;
   QString savegameExtension() const override;
   QString savegameSEExtension() const override;
+
+private:
+  bool activeESP() const;
+  bool activeESL() const;
+  bool activeOverlay() const;
+  bool testFilePresent() const;
+  bool pluginsTxtEnabler() const;
+
+private:
+  static const unsigned int PROBLEM_ESP         = 1;
+  static const unsigned int PROBLEM_ESL         = 2;
+  static const unsigned int PROBLEM_OVERLAY     = 3;
+  static const unsigned int PROBLEM_TEST_FILE   = 4;
+  static const unsigned int PROBLEM_PLUGINS_TXT = 5;
+
+  mutable std::set<QString> m_Active_ESPs;
+  mutable std::set<QString> m_Active_ESLs;
+  mutable std::set<QString> m_Active_Overlays;
 };
 
 #endif  // GAMEStarfield_H

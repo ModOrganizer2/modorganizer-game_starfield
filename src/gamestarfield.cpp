@@ -1,5 +1,7 @@
 #include "gamestarfield.h"
 
+#include "ipluginlist.h"
+
 #include "starfieldbsainvalidation.h"
 #include "starfielddataarchives.h"
 #include "starfieldgameplugins.h"
@@ -16,6 +18,7 @@
 #include <pluginsetting.h>
 
 #include <QCoreApplication>
+#include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
 #include <QList>
@@ -26,6 +29,7 @@
 #include <memory>
 
 #include "scopeguard.h"
+#include "utility.h"
 
 using namespace MOBase;
 
@@ -306,4 +310,202 @@ int GameStarfield::nexusModOrganizerID() const
 int GameStarfield::nexusGameID() const
 {
   return 4187;
+}
+
+// Start Diagnose
+std::vector<unsigned int> GameStarfield::activeProblems() const
+{
+  std::vector<unsigned int> result;
+  if (m_Organizer->managedGame() == this) {
+    if (activeESP())
+      result.push_back(PROBLEM_ESP);
+    if (activeESL())
+      result.push_back(PROBLEM_ESL);
+    if (activeOverlay())
+      result.push_back(PROBLEM_OVERLAY);
+    if (testFilePresent())
+      result.push_back(PROBLEM_TEST_FILE);
+    else if (pluginsTxtEnabler())
+      result.push_back(PROBLEM_PLUGINS_TXT);
+  }
+  return result;
+}
+
+bool GameStarfield::activeESP() const
+{
+  m_Active_ESPs.clear();
+  std::set<QString> enabledPlugins;
+
+  QStringList esps = m_Organizer->findFiles("", [](const QString& fileName) -> bool {
+    return fileName.endsWith(".esp", FileNameComparator::CaseSensitivity);
+  });
+
+  for (const QString& esp : esps) {
+    QString baseName = QFileInfo(esp).fileName();
+    if (m_Organizer->pluginList()->state(baseName) == IPluginList::STATE_ACTIVE) {
+      m_Active_ESPs.insert(baseName);
+    }
+  }
+
+  if (!m_Active_ESPs.empty())
+    return true;
+  return false;
+}
+
+bool GameStarfield::activeESL() const
+{
+  m_Active_ESLs.clear();
+  std::set<QString> enabledPlugins;
+
+  QStringList esps = m_Organizer->findFiles("", [](const QString& fileName) -> bool {
+    return fileName.endsWith(".esp", FileNameComparator::CaseSensitivity) ||
+           fileName.endsWith(".esm", FileNameComparator::CaseSensitivity) ||
+           fileName.endsWith(".esl", FileNameComparator::CaseSensitivity);
+  });
+
+  for (const QString& esp : esps) {
+    QString baseName = QFileInfo(esp).fileName();
+    if (primaryPlugins().contains(baseName, Qt::CaseInsensitive))
+      continue;
+    if (m_Organizer->pluginList()->state(baseName) == IPluginList::STATE_ACTIVE &&
+        !m_Organizer->pluginList()->isDummy(baseName))
+      if (m_Organizer->pluginList()->hasLightExtension(baseName) ||
+          m_Organizer->pluginList()->isLightFlagged(baseName))
+        m_Active_ESLs.insert(baseName);
+  }
+
+  if (!m_Active_ESLs.empty())
+    return true;
+  return false;
+}
+
+bool GameStarfield::activeOverlay() const
+{
+  m_Active_Overlays.clear();
+  std::set<QString> enabledPlugins;
+
+  QStringList esps = m_Organizer->findFiles("", [](const QString& fileName) -> bool {
+    return fileName.endsWith(".esp", FileNameComparator::CaseSensitivity) ||
+           fileName.endsWith(".esm", FileNameComparator::CaseSensitivity) ||
+           fileName.endsWith(".esl", FileNameComparator::CaseSensitivity);
+  });
+
+  for (const QString& esp : esps) {
+    QString baseName = QFileInfo(esp).fileName();
+    if (primaryPlugins().contains(baseName, Qt::CaseInsensitive))
+      continue;
+    if (m_Organizer->pluginList()->state(baseName) == IPluginList::STATE_ACTIVE) {
+      if (m_Organizer->pluginList()->isOverlayFlagged(baseName))
+        m_Active_Overlays.insert(baseName);
+    }
+  }
+
+  if (!m_Active_Overlays.empty())
+    return true;
+  return false;
+}
+
+bool GameStarfield::testFilePresent() const
+{
+  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool() &&
+      !testFilePlugins().isEmpty())
+    return true;
+  return false;
+}
+
+bool GameStarfield::pluginsTxtEnabler() const
+{
+  if (sortMechanism() != SortMechanism::NONE) {
+    auto files = m_Organizer->findFiles("sfse\\plugins", {"sfpluginstxtenabler.dll"});
+    if (files.isEmpty())
+      return true;
+  }
+  return false;
+}
+
+QString GameStarfield::shortDescription(unsigned int key) const
+{
+  switch (key) {
+  case PROBLEM_ESP:
+    return tr("You have active ESP plugins in Starfield");
+  case PROBLEM_ESL:
+    return tr("You have active ESL plugins in Starfield");
+  case PROBLEM_OVERLAY:
+    return tr("You have active overlay plugins");
+  case PROBLEM_TEST_FILE:
+    return tr("sTestFile entries are present");
+  case PROBLEM_PLUGINS_TXT:
+    return tr("Plugins.txt Enabler missing");
+  }
+}
+
+QString GameStarfield::fullDescription(unsigned int key) const
+{
+  switch (key) {
+  case PROBLEM_ESP: {
+    QString espInfo = SetJoin(m_Active_ESPs, ", ");
+    return tr("<p>ESP plugins are not ideal for Starfield. They cannot be sorted "
+              "alongside ESM or master-flagged plugins and always have their records "
+              "loaded by the game, taking up unnecessary space in memory.</p>"
+              "<p>Ideally, plugins should be saved as ESM files upon release. It can "
+              "also "
+              "be released as an ESL plugin, however there are additional concerns "
+              "with the way light plugins are currently handled and should only be "
+              "used when absolutely certain about what you're doing.</p>"
+              "<p>Notably, xEdit does not currently support saving ESP files.</p>"
+              "<h4>Current ESPs:</h4><p>%1</p>")
+        .arg(espInfo);
+  }
+  case PROBLEM_ESL: {
+    QString eslInfo = SetJoin(m_Active_ESLs, ", ");
+    return tr("<p>Light plugins work differently in Starfield. They use a different "
+              "base "
+              "form ID compared with standard plugin files.</p>"
+              "<p>What this means is that you can't just change a standard plugin to a "
+              "light plugin at will, it can and will break any dependent plugin. If "
+              "you do so, be absolutely certain no other plugins use that plugin as a "
+              "master.</p>"
+              "<p>Notably, xEdit does not currently support saving ESL files.<p>"
+              "<h4>Current ESLs:</h4><p>%1</p>")
+        .arg(eslInfo);
+  }
+  case PROBLEM_OVERLAY: {
+    QString overlayInfo = SetJoin(m_Active_Overlays, ", ");
+    return tr("<p>Overlay-flagged plugins are not currently recommended. In theory, "
+              "they "
+              "should allow you to update existing records without utilizing "
+              "additional memory space. Unfortunately, it appears that the game still "
+              "allocates memory as if these were standard plugins. Therefore, at the "
+              "moment there is no real use for this plugin flag.</p>"
+              "<p>Notably, xEdit does not currently support saving overlay-flagged "
+              "files.</p>"
+              "<h4>Current Overlays:</h4><p>%1</p>")
+        .arg(overlayInfo);
+  }
+  case PROBLEM_TEST_FILE: {
+    return tr("<p>You have plugin managment enabled but you still have sTestFile "
+              "settings in your StarfieldCustom.ini. These must be removed or the game "
+              "will not read the plugins.txt file. Management is still disabled.</p>");
+  }
+  case PROBLEM_PLUGINS_TXT: {
+    return tr("<p>You have plugin management turned on but do not have the Plugins.txt "
+              "Enabler SFSE plugin installed. Plugin file management for Starfield "
+              "will not work without this SFSE plugin.</p>");
+  }
+  }
+}
+
+bool GameStarfield::hasGuidedFix(unsigned int key) const
+{
+  if (key == PROBLEM_PLUGINS_TXT)
+    return true;
+  return false;
+}
+
+void GameStarfield::startGuidedFix(unsigned int key) const
+{
+  if (key == PROBLEM_PLUGINS_TXT) {
+    QDesktopServices::openUrl(
+        QUrl("https://www.nexusmods.com/starfield/mods/4157?tab=files"));
+  }
 }
