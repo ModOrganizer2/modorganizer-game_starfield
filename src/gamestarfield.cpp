@@ -135,7 +135,19 @@ QList<PluginSetting> GameStarfield::settings() const
                           tr("Turn on plugin management. As of Starfield 1.7.33 this "
                              "REQUIRES fixing 'plugins.txt' with a SFSE plugin. This "
                              "will do nothing otherwise."),
-                          false);
+                          false)
+         << PluginSetting(
+                "enable_esp_warning",
+                tr("Show a warning when ESP plugins are enabled in the load order."),
+                true)
+         << PluginSetting(
+                "enable_esl_warning",
+                tr("Show a warning when light plugins are enabled in the load order."),
+                true)
+         << PluginSetting("enable_overlay_warning",
+                          tr("Show a warning when overlay-flagged plugins ar enabled "
+                             "in the load order."),
+                          true);
 }
 
 MappingType GameStarfield::mappings() const
@@ -317,11 +329,14 @@ std::vector<unsigned int> GameStarfield::activeProblems() const
 {
   std::vector<unsigned int> result;
   if (m_Organizer->managedGame() == this) {
-    if (activeESP())
+    if (m_Organizer->pluginSetting(name(), "enable_esp_warning").toBool() &&
+        activeESP())
       result.push_back(PROBLEM_ESP);
-    if (activeESL())
+    if (m_Organizer->pluginSetting(name(), "enable_esl_warning").toBool() &&
+        activeESL())
       result.push_back(PROBLEM_ESL);
-    if (activeOverlay())
+    if (m_Organizer->pluginSetting(name(), "enable_overlay_warning").toBool() &&
+        activeOverlay())
       result.push_back(PROBLEM_OVERLAY);
     if (testFilePresent())
       result.push_back(PROBLEM_TEST_FILE);
