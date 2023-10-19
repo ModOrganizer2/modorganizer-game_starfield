@@ -383,7 +383,7 @@ bool GameStarfield::activeESL() const
     if (primaryPlugins().contains(baseName, Qt::CaseInsensitive))
       continue;
     if (m_Organizer->pluginList()->state(baseName) == IPluginList::STATE_ACTIVE &&
-        !m_Organizer->pluginList()->isDummy(baseName))
+        !m_Organizer->pluginList()->hasNoRecords(baseName))
       if (m_Organizer->pluginList()->hasLightExtension(baseName) ||
           m_Organizer->pluginList()->isLightFlagged(baseName))
         m_Active_ESLs.insert(baseName);
