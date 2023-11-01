@@ -71,30 +71,33 @@ QStringList StarfieldDataArchives::archives(const MOBase::IProfile* profile) con
 {
   QStringList result;
 
-  QString iniFile = m_GamePath.absoluteFilePath("Starfield.ini");
-  result.append(getArchivesFromKey(iniFile, "SResourceArchiveList"));
-  result.append(getArchivesFromKey(iniFile, "sResourceIndexFileList"));
-  result.append(getArchivesFromKey(iniFile, "SResourceArchiveMemoryCacheList"));
-  result.append(getArchivesFromKey(iniFile, "sResourceStartUpArchiveList"));
-  result.append(getArchivesFromKey(iniFile, "sResourceEnglishVoiceList"));
+  QString defaultIniFile = m_GamePath.absoluteFilePath("Starfield.ini");
+  QString customIniFile =
+      profile->localSettingsEnabled()
+          ? QDir(profile->absolutePath()).absoluteFilePath("StarfieldCustom.ini")
+          : m_LocalGameDir.absoluteFilePath("StarfieldCustom.ini");
+  QStringList archiveSettings = {"SResourceArchiveList", "sResourceIndexFileList",
+                                 "SResourceArchiveMemoryCacheList",
+                                 "sResourceStartUpArchiveList",
+                                 "sResourceEnglishVoiceList"};
+  for (auto setting : archiveSettings) {
+    auto archives = getArchivesFromKey(customIniFile, setting, 1023);
+    if (archives.isEmpty())
+      archives = getArchivesFromKey(defaultIniFile, setting, 1023);
+    result.append(archives);
+  }
 
   return result;
 }
 
 void StarfieldDataArchives::writeArchiveList(MOBase::IProfile* profile,
                                              const QStringList& before)
-{
-  QString list = before.join(", ");
+{}
 
-  QString iniFile =
-      profile->localSettingsEnabled()
-          ? QDir(profile->absolutePath()).absoluteFilePath("Starfield.ini")
-          : m_LocalGameDir.absoluteFilePath("Starfield.ini");
-  if (list.length() > 255) {
-    int splitIdx = list.lastIndexOf(",", 256);
-    setArchivesToKey(iniFile, "SResourceArchiveList", list.mid(0, splitIdx));
-    setArchivesToKey(iniFile, "SResourceArchiveList2", list.mid(splitIdx + 2));
-  } else {
-    setArchivesToKey(iniFile, "SResourceArchiveList", list);
-  }
-}
+void StarfieldDataArchives::addArchive(MOBase::IProfile* profile, int index,
+                                       const QString& archiveName)
+{}
+
+void StarfieldDataArchives::removeArchive(MOBase::IProfile* profile,
+                                          const QString& archiveName)
+{}

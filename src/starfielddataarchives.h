@@ -20,6 +20,10 @@ public:
 public:
   virtual QStringList vanillaArchives() const override;
   virtual QStringList archives(const MOBase::IProfile* profile) const override;
+  virtual void addArchive(MOBase::IProfile* profile, int index,
+                          const QString& archiveName) override;
+  virtual void removeArchive(MOBase::IProfile* profile,
+                             const QString& archiveName) override;
 
 protected:
   const QDir m_GamePath;

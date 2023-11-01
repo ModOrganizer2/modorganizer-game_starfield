@@ -28,16 +28,26 @@ StarfieldSaveGame::StarfieldSaveGame(QString const& fileName, GameStarfield cons
 void StarfieldSaveGame::getData(FileWrapper& file) const
 {
   file.skip<uint32_t>();  // header version
-  file.skip<uint64_t>();  // zip start location
-  file.skip<uint64_t>();  // unknown
+  file.skip<uint64_t>();  // chunk compressed size array start location
+  file.skip<uint64_t>();  // unknown (0?)
   file.setCompressionType(1);
-  file.openCompressedData();  // long = start, long = size
-  // double
-  // float
-  // long
-  // long
-  // short
-  return;
+  /*
+   * Parse following variables then begin decompressing data
+   * - 64-bit int = compressed data start location
+   * - 64-bit int = complete uncompressed data size
+   */
+  file.openCompressedData();
+  /*
+   * Remaining headers before start of compressed data:
+   * - 32-bit float (version? appears to be 2.0)
+   * - 64-bit int - size of uncompressed chunks (250 KiB)
+   * - 64-bit int - size of byte rows? (16 bytes) used to determine start of each
+   *   compressed chunk
+   * - 32-bit int - number of chunks?
+   * - 'ZIP ' - denotes start of chunk compressed size array
+   * - compressed size array - array of 32-bit ints containing the compressed size of
+   *   each compressed chunk (see number of chunks above)
+   */
 }
 
 void StarfieldSaveGame::fetchInformationFields(
@@ -102,10 +112,8 @@ std::unique_ptr<GamebryoSaveGame::DataFields> StarfieldSaveGame::fetchDataFields
   file.read(ignore);  // game version again?
   file.readInt();     // plugin info size
 
-  fields->Plugins = file.readPlugins();
-  if (saveGameVersion >= 82) {
-    fields->LightPlugins = file.readLightPlugins();
-  }
+  fields->Plugins      = file.readPlugins();
+  fields->LightPlugins = file.readLightPlugins();
   file.closeCompressedData();
   file.close();
 

@@ -125,17 +125,12 @@ QString GameStarfield::description() const
 
 MOBase::VersionInfo GameStarfield::version() const
 {
-  return VersionInfo(0, 5, 0, VersionInfo::RELEASE_BETA);
+  return VersionInfo(1, 0, 0, VersionInfo::RELEASE_CANDIDATE);
 }
 
 QList<PluginSetting> GameStarfield::settings() const
 {
   return QList<PluginSetting>()
-         << PluginSetting("enable_plugin_management",
-                          tr("Turn on plugin management. As of Starfield 1.7.33 this "
-                             "REQUIRES fixing 'plugins.txt' with a SFSE plugin. This "
-                             "will do nothing otherwise."),
-                          false)
          << PluginSetting(
                 "enable_esp_warning",
                 tr("Show a warning when ESP plugins are enabled in the load order."),
@@ -153,8 +148,7 @@ QList<PluginSetting> GameStarfield::settings() const
 MappingType GameStarfield::mappings() const
 {
   MappingType result;
-  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool() &&
-      testFilePlugins().isEmpty()) {
+  if (testFilePlugins().isEmpty()) {
     for (const QString& profileFile : {"plugins.txt", "loadorder.txt"}) {
       result.push_back({m_Organizer->profilePath() + "/" + profileFile,
                         localAppFolder() + "/" + gameShortName() + "/" + profileFile,
@@ -300,16 +294,14 @@ QStringList GameStarfield::CCPlugins() const
 
 IPluginGame::SortMechanism GameStarfield::sortMechanism() const
 {
-  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool() &&
-      testFilePlugins().isEmpty())
+  if (testFilePlugins().isEmpty())
     return IPluginGame::SortMechanism::LOOT;
   return IPluginGame::SortMechanism::NONE;
 }
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 {
-  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool() &&
-      testFilePlugins().isEmpty())
+  if (testFilePlugins().isEmpty())
     return IPluginGame::LoadOrderMechanism::PluginsTxt;
   return IPluginGame::LoadOrderMechanism::None;
 }
@@ -422,8 +414,7 @@ bool GameStarfield::activeOverlay() const
 
 bool GameStarfield::testFilePresent() const
 {
-  if (m_Organizer->pluginSetting(name(), "enable_plugin_management").toBool() &&
-      !testFilePlugins().isEmpty())
+  if (!testFilePlugins().isEmpty())
     return true;
   return false;
 }
