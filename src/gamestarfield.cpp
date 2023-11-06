@@ -125,7 +125,7 @@ QString GameStarfield::description() const
 
 MOBase::VersionInfo GameStarfield::version() const
 {
-  return VersionInfo(1, 0, 0, VersionInfo::RELEASE_CANDIDATE);
+  return VersionInfo(1, 0, 0, VersionInfo::RELEASE_FINAL);
 }
 
 QList<PluginSetting> GameStarfield::settings() const
@@ -142,7 +142,14 @@ QList<PluginSetting> GameStarfield::settings() const
          << PluginSetting("enable_overlay_warning",
                           tr("Show a warning when overlay-flagged plugins ar enabled "
                              "in the load order."),
-                          true);
+                          true)
+         << PluginSetting("enable_management_warnings",
+                          tr("Show a warning when plugins.txt management is invalid."),
+                          true)
+         << PluginSetting("enable_loot_sorting",
+                          tr("As of this release LOOT Starfield support is minimal to "
+                             "nonexistant. Toggle this to enable it anyway."),
+                          false);
 }
 
 MappingType GameStarfield::mappings() const
@@ -294,14 +301,15 @@ QStringList GameStarfield::CCPlugins() const
 
 IPluginGame::SortMechanism GameStarfield::sortMechanism() const
 {
-  if (testFilePlugins().isEmpty())
+  if (!testFilePresent() &&
+      m_Organizer->pluginSetting(name(), "enable_loot_sorting").toBool())
     return IPluginGame::SortMechanism::LOOT;
   return IPluginGame::SortMechanism::NONE;
 }
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 {
-  if (testFilePlugins().isEmpty())
+  if (!testFilePresent() && pluginsTxtEnablerPresent())
     return IPluginGame::LoadOrderMechanism::PluginsTxt;
   return IPluginGame::LoadOrderMechanism::None;
 }
@@ -330,10 +338,12 @@ std::vector<unsigned int> GameStarfield::activeProblems() const
     if (m_Organizer->pluginSetting(name(), "enable_overlay_warning").toBool() &&
         activeOverlay())
       result.push_back(PROBLEM_OVERLAY);
-    if (testFilePresent())
-      result.push_back(PROBLEM_TEST_FILE);
-    else if (pluginsTxtEnabler())
-      result.push_back(PROBLEM_PLUGINS_TXT);
+    if (m_Organizer->pluginSetting(name(), "enable_management_warnings").toBool()) {
+      if (testFilePresent())
+        result.push_back(PROBLEM_TEST_FILE);
+      else if (!pluginsTxtEnablerPresent())
+        result.push_back(PROBLEM_PLUGINS_TXT);
+    }
   }
   return result;
 }
@@ -419,14 +429,12 @@ bool GameStarfield::testFilePresent() const
   return false;
 }
 
-bool GameStarfield::pluginsTxtEnabler() const
+bool GameStarfield::pluginsTxtEnablerPresent() const
 {
-  if (sortMechanism() != SortMechanism::NONE) {
-    auto files = m_Organizer->findFiles("sfse\\plugins", {"sfpluginstxtenabler.dll"});
-    if (files.isEmpty())
-      return true;
-  }
-  return false;
+  auto files = m_Organizer->findFiles("sfse\\plugins", {"sfpluginstxtenabler.dll"});
+  if (files.isEmpty())
+    return false;
+  return true;
 }
 
 QString GameStarfield::shortDescription(unsigned int key) const
