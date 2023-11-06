@@ -73,7 +73,7 @@ private:
   bool activeESL() const;
   bool activeOverlay() const;
   bool testFilePresent() const;
-  bool pluginsTxtEnabler() const;
+  bool pluginsTxtEnablerPresent() const;
 
 private:
   static const unsigned int PROBLEM_ESP         = 1;

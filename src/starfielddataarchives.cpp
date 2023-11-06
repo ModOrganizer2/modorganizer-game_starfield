@@ -81,9 +81,9 @@ QStringList StarfieldDataArchives::archives(const MOBase::IProfile* profile) con
                                  "sResourceStartUpArchiveList",
                                  "sResourceEnglishVoiceList"};
   for (auto setting : archiveSettings) {
-    auto archives = getArchivesFromKey(customIniFile, setting, 1023);
+    auto archives = getArchivesFromKey(customIniFile, setting, 4096);
     if (archives.isEmpty())
-      archives = getArchivesFromKey(defaultIniFile, setting, 1023);
+      archives = getArchivesFromKey(defaultIniFile, setting, 4096);
     result.append(archives);
   }
 
