@@ -146,6 +146,10 @@ QList<PluginSetting> GameStarfield::settings() const
          << PluginSetting("enable_management_warnings",
                           tr("Show a warning when plugins.txt management is invalid."),
                           true)
+         << PluginSetting("bypass_plugins_enabler_check",
+                          tr("Bypass check for Plugins.txt Enabler. This may be useful "
+                             "if you use the ASI loader."),
+                          false)
          << PluginSetting("enable_loot_sorting",
                           tr("As of this release LOOT Starfield support is minimal to "
                              "nonexistant. Toggle this to enable it anyway."),
@@ -309,7 +313,9 @@ IPluginGame::SortMechanism GameStarfield::sortMechanism() const
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 {
-  if (!testFilePresent() && pluginsTxtEnablerPresent())
+  if (!testFilePresent() &&
+      (pluginsTxtEnablerPresent() ||
+       m_Organizer->pluginSetting(name(), "bypass_plugins_enabler_check").toBool()))
     return IPluginGame::LoadOrderMechanism::PluginsTxt;
   return IPluginGame::LoadOrderMechanism::None;
 }
@@ -432,6 +438,7 @@ bool GameStarfield::testFilePresent() const
 bool GameStarfield::pluginsTxtEnablerPresent() const
 {
   auto files = m_Organizer->findFiles("sfse\\plugins", {"sfpluginstxtenabler.dll"});
+  files += m_Organizer->findFiles("", {"sfpluginstxtenabler.asi"});
   if (files.isEmpty())
     return false;
   return true;
