@@ -16,7 +16,8 @@ class IPluginGame;
 class StarfieldBSAInvalidation : public GamebryoBSAInvalidation
 {
 public:
-  StarfieldBSAInvalidation(DataArchives* dataArchives, MOBase::IPluginGame const* game);
+  StarfieldBSAInvalidation(MOBase::DataArchives* dataArchives,
+                           MOBase::IPluginGame const* game);
   virtual bool isInvalidationBSA(const QString& bsaName) override;
   virtual bool prepareProfile(MOBase::IProfile* profile) override;
 

@@ -15,8 +15,8 @@ protected:
   };
 
 public:
-  StarfieldModDataContent(GameGamebryo const* gamePlugin)
-      : GamebryoModDataContent(gamePlugin)
+  StarfieldModDataContent(MOBase::IGameFeatures const* gameFeatures)
+      : GamebryoModDataContent(gameFeatures)
   {
     m_Enabled[CONTENT_SKYPROC]    = false;
     m_Enabled[CONTENT_MATERIAL]   = true;
