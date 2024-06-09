@@ -7,7 +7,7 @@
 #include <imoinfo.h>
 #include <utility.h>
 
-StarfieldBSAInvalidation::StarfieldBSAInvalidation(DataArchives* dataArchives,
+StarfieldBSAInvalidation::StarfieldBSAInvalidation(MOBase::DataArchives* dataArchives,
                                                    MOBase::IPluginGame const* game)
     : GamebryoBSAInvalidation(dataArchives, "StarfieldCustom.ini", game)
 {

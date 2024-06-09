@@ -41,18 +41,19 @@ bool GameStarfield::init(IOrganizer* moInfo)
     return false;
   }
 
-  registerFeature<ScriptExtender>(new StarfieldScriptExtender(this));
-  registerFeature<DataArchives>(
-      new StarfieldDataArchives(myGamesPath(), gameDirectory()));
-  registerFeature<LocalSavegames>(
-      new GamebryoLocalSavegames(myGamesPath(), "StarfieldCustom.ini"));
-  registerFeature<ModDataChecker>(new StarfieldModDataChecker(this));
-  registerFeature<ModDataContent>(new StarfieldModDataContent(this));
-  registerFeature<SaveGameInfo>(new GamebryoSaveGameInfo(this));
-  registerFeature<GamePlugins>(new StarfieldGamePlugins(moInfo));
-  registerFeature<UnmanagedMods>(new StarfieldUnmangedMods(this));
-  registerFeature<BSAInvalidation>(
-      new StarfieldBSAInvalidation(feature<DataArchives>(), this));
+  auto dataArchives =
+      std::make_shared<StarfieldDataArchives>(myGamesPath(), gameDirectory());
+  registerFeature(std::make_shared<StarfieldScriptExtender>(this));
+  registerFeature(dataArchives);
+  registerFeature(
+      std::make_shared<GamebryoLocalSavegames>(myGamesPath(), "StarfieldCustom.ini"));
+  registerFeature(std::make_shared<StarfieldModDataChecker>(this));
+  registerFeature(
+      std::make_shared<StarfieldModDataContent>(m_Organizer->gameFeatures()));
+  registerFeature(std::make_shared<GamebryoSaveGameInfo>(this));
+  registerFeature(std::make_shared<StarfieldGamePlugins>(moInfo));
+  registerFeature(std::make_shared<StarfieldUnmangedMods>(this));
+  registerFeature(std::make_shared<StarfieldBSAInvalidation>(dataArchives.get(), this));
 
   return true;
 }
@@ -92,7 +93,9 @@ QList<ExecutableInfo> GameStarfield::executables() const
 {
   return QList<ExecutableInfo>()
          << ExecutableInfo("SFSE",
-                           findInGameFolder(feature<ScriptExtender>()->loaderName()))
+                           findInGameFolder(m_Organizer->gameFeatures()
+                                                ->gameFeature<MOBase::ScriptExtender>()
+                                                ->loaderName()))
          << ExecutableInfo("Starfield", findInGameFolder(binaryName()))
          << ExecutableInfo("LOOT", QFileInfo(getLootPath()))
                 .withArgument("--game=\"Starfield\"");
@@ -459,6 +462,7 @@ QString GameStarfield::shortDescription(unsigned int key) const
   case PROBLEM_PLUGINS_TXT:
     return tr("Plugins.txt Enabler missing");
   }
+  return "";
 }
 
 QString GameStarfield::fullDescription(unsigned int key) const
@@ -515,6 +519,7 @@ QString GameStarfield::fullDescription(unsigned int key) const
               "will not work without this SFSE plugin.</p>");
   }
   }
+  return "";
 }
 
 bool GameStarfield::hasGuidedFix(unsigned int key) const
