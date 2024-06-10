@@ -18,9 +18,7 @@ public:
   StarfieldModDataContent(MOBase::IGameFeatures const* gameFeatures)
       : GamebryoModDataContent(gameFeatures)
   {
-    m_Enabled[CONTENT_SKYPROC]    = false;
-    m_Enabled[CONTENT_MATERIAL]   = true;
-    m_Enabled[CONTENT_GEOMETRIES] = true;
+    m_Enabled[CONTENT_SKYPROC] = false;
   }
 
   std::vector<Content> getAllContents() const override
