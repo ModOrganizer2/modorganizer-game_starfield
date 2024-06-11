@@ -13,7 +13,7 @@ public:
   StarfieldGamePlugins(MOBase::IOrganizer* organizer);
 
 protected:
-  virtual bool overridePluginsAreSupported() override;
+  virtual bool mediumPluginsAreSupported() override;
   virtual void writePluginList(const MOBase::IPluginList* pluginList,
                                const QString& filePath) override;
   virtual QStringList readPluginList(MOBase::IPluginList* pluginList) override;
