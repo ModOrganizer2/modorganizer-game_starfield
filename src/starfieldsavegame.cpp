@@ -110,14 +110,15 @@ std::unique_ptr<GamebryoSaveGame::DataFields> StarfieldSaveGame::fetchDataFields
   QString ignore;
   std::unique_ptr<DataFields> fields = std::make_unique<DataFields>();
 
-  uint8_t saveGameVersion = file.readChar(12);
+  file.readChar(12);
   file.read(ignore);  // game version
   file.read(ignore);  // game version again?
   file.readInt();     // plugin info size
 
-  fields->Plugins       = file.readPlugins(0, extraInfo, gamePlugins);
-  fields->LightPlugins  = file.readLightPlugins(0, extraInfo, gamePlugins);
-  fields->MediumPlugins = file.readMediumPlugins(0, extraInfo, gamePlugins);
+  fields->Plugins      = file.readPlugins(0, extraInfo, gamePlugins);
+  fields->LightPlugins = file.readLightPlugins(0, extraInfo, gamePlugins);
+  if (saveVersion >= 122)
+    fields->MediumPlugins = file.readMediumPlugins(0, extraInfo, gamePlugins);
   file.closeCompressedData();
   file.close();
 
