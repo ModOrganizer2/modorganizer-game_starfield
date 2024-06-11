@@ -73,8 +73,8 @@ private:
   bool testFilePresent() const;
 
 private:
-  static const unsigned int PROBLEM_ESP         = 1;
-  static const unsigned int PROBLEM_TEST_FILE   = 2;
+  static const unsigned int PROBLEM_ESP       = 1;
+  static const unsigned int PROBLEM_TEST_FILE = 2;
 
   mutable std::set<QString> m_Active_ESPs;
 };
