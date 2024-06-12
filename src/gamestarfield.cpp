@@ -97,6 +97,8 @@ QList<ExecutableInfo> GameStarfield::executables() const
                                                 ->gameFeature<MOBase::ScriptExtender>()
                                                 ->loaderName()))
          << ExecutableInfo("Starfield", findInGameFolder(binaryName()))
+         << ExecutableInfo("Creation Kit", findInGameFolder("CreationKit.exe"))
+                .withSteamAppId("2722710")
          << ExecutableInfo("LOOT", QFileInfo(getLootPath()))
                 .withArgument("--game=\"Starfield\"");
 }
