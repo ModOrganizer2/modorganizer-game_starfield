@@ -5,14 +5,15 @@
 #include "gamestarfield.h"
 
 StarfieldSaveGame::StarfieldSaveGame(QString const& fileName, GameStarfield const* game)
-    : GamebryoSaveGame(fileName, game, true)
+    : GamebryoSaveGame(fileName, game, true, true)
 {
   FileWrapper file(getFilepath(), "BCPS");
 
   getData(file);
   FILETIME creationTime;
-  fetchInformationFields(file, m_SaveNumber, m_PCName, m_PCLevel, m_PCLocation,
-                         creationTime);
+  unsigned char saveVersion;
+  fetchInformationFields(file, m_SaveNumber, saveVersion, m_PCName, m_PCLevel,
+                         m_PCLocation, creationTime);
   file.closeCompressedData();
   file.close();
 
@@ -51,18 +52,18 @@ void StarfieldSaveGame::getData(FileWrapper& file) const
 }
 
 void StarfieldSaveGame::fetchInformationFields(
-    FileWrapper& file, unsigned long& saveNumber, QString& playerName,
-    unsigned short& playerLevel, QString& playerLocation, FILETIME& creationTime) const
+    FileWrapper& file, unsigned long& saveNumber, unsigned char& saveVersion,
+    QString& playerName, unsigned short& playerLevel, QString& playerLocation,
+    FILETIME& creationTime) const
 {
   char fileID[12];  // SFS_SAVEGAME
   unsigned int headerSize;
   unsigned int version;
-  unsigned char unknown;
   // file.read(fileID, 12);
-  headerSize = file.readInt(12);
-  version    = file.readInt();
-  unknown    = file.readChar();
-  saveNumber = file.readInt();
+  headerSize  = file.readInt(12);
+  saveNumber  = file.readInt();
+  saveVersion = file.readChar();
+  version     = file.readInt();
   file.read(playerName);
 
   unsigned int temp;
@@ -91,6 +92,7 @@ std::unique_ptr<GamebryoSaveGame::DataFields> StarfieldSaveGame::fetchDataFields
 
   getData(file);
   FILETIME creationTime;
+  unsigned char saveVersion;
 
   {
     QString dummyName, dummyLocation;
@@ -98,22 +100,25 @@ std::unique_ptr<GamebryoSaveGame::DataFields> StarfieldSaveGame::fetchDataFields
     unsigned long dummySaveNumber;
     FILETIME dummyTime;
 
-    fetchInformationFields(file, dummySaveNumber, dummyName, dummyLevel, dummyLocation,
-                           dummyTime);
+    fetchInformationFields(file, dummySaveNumber, saveVersion, dummyName, dummyLevel,
+                           dummyLocation, dummyTime);
   }
+
+  bool extraInfo          = saveVersion >= 122;
+  QStringList gamePlugins = m_Game->primaryPlugins() + m_Game->enabledPlugins();
 
   QString ignore;
   std::unique_ptr<DataFields> fields = std::make_unique<DataFields>();
 
-  // fields->Screenshot = file.readImage(384, true);
-
-  uint8_t saveGameVersion = file.readChar(12);
+  file.readChar(12);
   file.read(ignore);  // game version
   file.read(ignore);  // game version again?
   file.readInt();     // plugin info size
 
-  fields->Plugins      = file.readPlugins();
-  fields->LightPlugins = file.readLightPlugins();
+  fields->Plugins      = file.readPlugins(0, extraInfo, gamePlugins);
+  fields->LightPlugins = file.readLightPlugins(0, extraInfo, gamePlugins);
+  if (saveVersion >= 122)
+    fields->MediumPlugins = file.readMediumPlugins(0, extraInfo, gamePlugins);
   file.closeCompressedData();
   file.close();
 

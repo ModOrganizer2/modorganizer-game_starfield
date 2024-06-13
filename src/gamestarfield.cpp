@@ -97,6 +97,8 @@ QList<ExecutableInfo> GameStarfield::executables() const
                                                 ->gameFeature<MOBase::ScriptExtender>()
                                                 ->loaderName()))
          << ExecutableInfo("Starfield", findInGameFolder(binaryName()))
+         << ExecutableInfo("Creation Kit", findInGameFolder("CreationKit.exe"))
+                .withSteamAppId("2722710")
          << ExecutableInfo("LOOT", QFileInfo(getLootPath()))
                 .withArgument("--game=\"Starfield\"");
 }
@@ -138,21 +140,9 @@ QList<PluginSetting> GameStarfield::settings() const
                 "enable_esp_warning",
                 tr("Show a warning when ESP plugins are enabled in the load order."),
                 true)
-         << PluginSetting(
-                "enable_esl_warning",
-                tr("Show a warning when light plugins are enabled in the load order."),
-                true)
-         << PluginSetting("enable_overlay_warning",
-                          tr("Show a warning when overlay-flagged plugins ar enabled "
-                             "in the load order."),
-                          true)
          << PluginSetting("enable_management_warnings",
                           tr("Show a warning when plugins.txt management is invalid."),
                           true)
-         << PluginSetting("bypass_plugins_enabler_check",
-                          tr("Bypass check for Plugins.txt Enabler. This may be useful "
-                             "if you use the ASI loader."),
-                          false)
          << PluginSetting("enable_loot_sorting",
                           tr("As of this release LOOT Starfield support is minimal to "
                              "nonexistant. Toggle this to enable it anyway."),
@@ -229,8 +219,10 @@ QStringList GameStarfield::testFilePlugins() const
 
 QStringList GameStarfield::primaryPlugins() const
 {
-  QStringList plugins = {"Starfield.esm", "Constellation.esm", "OldMars.esm",
-                         "SFBGS006.esm",  "SFBGS007.esm",      "SFBGS008.esm"};
+  QStringList plugins = {"Starfield.esm", "Constellation.esm",
+                         "OldMars.esm",   "BlueprintShips-Starfield.esm",
+                         "SFBGS003.esm",  "SFBGS006.esm",
+                         "SFBGS007.esm",  "SFBGS008.esm"};
 
   auto testPlugins = testFilePlugins();
   if (loadOrderMechanism() == LoadOrderMechanism::None) {
@@ -245,7 +237,7 @@ QStringList GameStarfield::primaryPlugins() const
 
 QStringList GameStarfield::enabledPlugins() const
 {
-  return {"BlueprintShips-Starfield.esm"};
+  return {};
 }
 
 QStringList GameStarfield::gameVariants() const
@@ -317,9 +309,7 @@ IPluginGame::SortMechanism GameStarfield::sortMechanism() const
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
 {
-  if (!testFilePresent() &&
-      (pluginsTxtEnablerPresent() ||
-       m_Organizer->pluginSetting(name(), "bypass_plugins_enabler_check").toBool()))
+  if (!testFilePresent())
     return IPluginGame::LoadOrderMechanism::PluginsTxt;
   return IPluginGame::LoadOrderMechanism::None;
 }
@@ -342,17 +332,9 @@ std::vector<unsigned int> GameStarfield::activeProblems() const
     if (m_Organizer->pluginSetting(name(), "enable_esp_warning").toBool() &&
         activeESP())
       result.push_back(PROBLEM_ESP);
-    if (m_Organizer->pluginSetting(name(), "enable_esl_warning").toBool() &&
-        activeESL())
-      result.push_back(PROBLEM_ESL);
-    if (m_Organizer->pluginSetting(name(), "enable_overlay_warning").toBool() &&
-        activeOverlay())
-      result.push_back(PROBLEM_OVERLAY);
     if (m_Organizer->pluginSetting(name(), "enable_management_warnings").toBool()) {
       if (testFilePresent())
         result.push_back(PROBLEM_TEST_FILE);
-      else if (!pluginsTxtEnablerPresent())
-        result.push_back(PROBLEM_PLUGINS_TXT);
     }
   }
   return result;
@@ -379,59 +361,6 @@ bool GameStarfield::activeESP() const
   return false;
 }
 
-bool GameStarfield::activeESL() const
-{
-  m_Active_ESLs.clear();
-  std::set<QString> enabledPlugins;
-
-  QStringList esps = m_Organizer->findFiles("", [](const QString& fileName) -> bool {
-    return fileName.endsWith(".esp", FileNameComparator::CaseSensitivity) ||
-           fileName.endsWith(".esm", FileNameComparator::CaseSensitivity) ||
-           fileName.endsWith(".esl", FileNameComparator::CaseSensitivity);
-  });
-
-  for (const QString& esp : esps) {
-    QString baseName = QFileInfo(esp).fileName();
-    if (primaryPlugins().contains(baseName, Qt::CaseInsensitive))
-      continue;
-    if (m_Organizer->pluginList()->state(baseName) == IPluginList::STATE_ACTIVE &&
-        !m_Organizer->pluginList()->hasNoRecords(baseName))
-      if (m_Organizer->pluginList()->hasLightExtension(baseName) ||
-          m_Organizer->pluginList()->isLightFlagged(baseName))
-        m_Active_ESLs.insert(baseName);
-  }
-
-  if (!m_Active_ESLs.empty())
-    return true;
-  return false;
-}
-
-bool GameStarfield::activeOverlay() const
-{
-  m_Active_Overlays.clear();
-  std::set<QString> enabledPlugins;
-
-  QStringList esps = m_Organizer->findFiles("", [](const QString& fileName) -> bool {
-    return fileName.endsWith(".esp", FileNameComparator::CaseSensitivity) ||
-           fileName.endsWith(".esm", FileNameComparator::CaseSensitivity) ||
-           fileName.endsWith(".esl", FileNameComparator::CaseSensitivity);
-  });
-
-  for (const QString& esp : esps) {
-    QString baseName = QFileInfo(esp).fileName();
-    if (primaryPlugins().contains(baseName, Qt::CaseInsensitive))
-      continue;
-    if (m_Organizer->pluginList()->state(baseName) == IPluginList::STATE_ACTIVE) {
-      if (m_Organizer->pluginList()->isOverlayFlagged(baseName))
-        m_Active_Overlays.insert(baseName);
-    }
-  }
-
-  if (!m_Active_Overlays.empty())
-    return true;
-  return false;
-}
-
 bool GameStarfield::testFilePresent() const
 {
   if (!testFilePlugins().isEmpty())
@@ -439,28 +368,13 @@ bool GameStarfield::testFilePresent() const
   return false;
 }
 
-bool GameStarfield::pluginsTxtEnablerPresent() const
-{
-  auto files = m_Organizer->findFiles("sfse\\plugins", {"sfpluginstxtenabler.dll"});
-  files += m_Organizer->findFiles("", {"sfpluginstxtenabler.asi"});
-  if (files.isEmpty())
-    return false;
-  return true;
-}
-
 QString GameStarfield::shortDescription(unsigned int key) const
 {
   switch (key) {
   case PROBLEM_ESP:
     return tr("You have active ESP plugins in Starfield");
-  case PROBLEM_ESL:
-    return tr("You have active ESL plugins in Starfield");
-  case PROBLEM_OVERLAY:
-    return tr("You have active overlay plugins");
   case PROBLEM_TEST_FILE:
     return tr("sTestFile entries are present");
-  case PROBLEM_PLUGINS_TXT:
-    return tr("Plugins.txt Enabler missing");
   }
   return "";
 }
@@ -483,40 +397,10 @@ QString GameStarfield::fullDescription(unsigned int key) const
               "<h4>Current ESPs:</h4><p>%1</p>")
         .arg(espInfo);
   }
-  case PROBLEM_ESL: {
-    QString eslInfo = SetJoin(m_Active_ESLs, ", ");
-    return tr("<p>Light plugins work differently in Starfield. They use a different "
-              "base form ID compared with standard plugin files.</p>"
-              "<p>What this means is that you can't just change a standard plugin to a "
-              "light plugin at will, it can and will break any dependent plugin. If "
-              "you do so, be absolutely certain no other plugins use that plugin as a "
-              "master.</p>"
-              "<p>Notably, xEdit does not currently support saving or loading ESL "
-              "files under these conditions.<p>"
-              "<h4>Current ESLs:</h4><p>%1</p>")
-        .arg(eslInfo);
-  }
-  case PROBLEM_OVERLAY: {
-    QString overlayInfo = SetJoin(m_Active_Overlays, ", ");
-    return tr("<p>Overlay-flagged plugins are not currently recommended. In theory, "
-              "they should allow you to update existing records without utilizing "
-              "additional load order slots. Unfortunately, it appears that the game "
-              "still allocates the slots as if these were standard plugins. Therefore, "
-              "at the moment there is no real use for this plugin flag.</p>"
-              "<p>Notably, xEdit does not currently support saving or loading "
-              "overlay-flagged files under these conditions.</p>"
-              "<h4>Current Overlays:</h4><p>%1</p>")
-        .arg(overlayInfo);
-  }
   case PROBLEM_TEST_FILE: {
     return tr("<p>You have plugin managment enabled but you still have sTestFile "
               "settings in your StarfieldCustom.ini. These must be removed or the game "
               "will not read the plugins.txt file. Management is still disabled.</p>");
-  }
-  case PROBLEM_PLUGINS_TXT: {
-    return tr("<p>You have plugin management turned on but do not have the Plugins.txt "
-              "Enabler SFSE plugin installed. Plugin file management for Starfield "
-              "will not work without this SFSE plugin.</p>");
   }
   }
   return "";
@@ -524,15 +408,7 @@ QString GameStarfield::fullDescription(unsigned int key) const
 
 bool GameStarfield::hasGuidedFix(unsigned int key) const
 {
-  if (key == PROBLEM_PLUGINS_TXT)
-    return true;
   return false;
 }
 
-void GameStarfield::startGuidedFix(unsigned int key) const
-{
-  if (key == PROBLEM_PLUGINS_TXT) {
-    QDesktopServices::openUrl(
-        QUrl("https://www.nexusmods.com/starfield/mods/4157?tab=files"));
-  }
-}
+void GameStarfield::startGuidedFix(unsigned int key) const {}

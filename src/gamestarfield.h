@@ -70,21 +70,13 @@ protected:
 
 private:
   bool activeESP() const;
-  bool activeESL() const;
-  bool activeOverlay() const;
   bool testFilePresent() const;
-  bool pluginsTxtEnablerPresent() const;
 
 private:
-  static const unsigned int PROBLEM_ESP         = 1;
-  static const unsigned int PROBLEM_ESL         = 2;
-  static const unsigned int PROBLEM_OVERLAY     = 3;
-  static const unsigned int PROBLEM_TEST_FILE   = 4;
-  static const unsigned int PROBLEM_PLUGINS_TXT = 5;
+  static const unsigned int PROBLEM_ESP       = 1;
+  static const unsigned int PROBLEM_TEST_FILE = 2;
 
   mutable std::set<QString> m_Active_ESPs;
-  mutable std::set<QString> m_Active_ESLs;
-  mutable std::set<QString> m_Active_Overlays;
 };
 
 #endif  // GAMEStarfield_H

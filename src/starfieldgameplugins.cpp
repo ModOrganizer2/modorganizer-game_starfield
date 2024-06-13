@@ -6,7 +6,7 @@ StarfieldGamePlugins::StarfieldGamePlugins(MOBase::IOrganizer* organizer)
     : CreationGamePlugins(organizer)
 {}
 
-bool StarfieldGamePlugins::overridePluginsAreSupported()
+bool StarfieldGamePlugins::mediumPluginsAreSupported()
 {
   return true;
 }

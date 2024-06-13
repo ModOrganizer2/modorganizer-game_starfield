@@ -18,8 +18,9 @@ protected:
   void getData(FileWrapper& file) const;
 
   void fetchInformationFields(FileWrapper& file, unsigned long& saveNumber,
-                              QString& playerName, unsigned short& playerLevel,
-                              QString& playerLocation, FILETIME& creationTime) const;
+                              unsigned char& saveVersion, QString& playerName,
+                              unsigned short& playerLevel, QString& playerLocation,
+                              FILETIME& creationTime) const;
 
   std::unique_ptr<DataFields> fetchDataFields() const override;
 };
