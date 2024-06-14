@@ -41,12 +41,11 @@ bool GameStarfield::init(IOrganizer* moInfo)
     return false;
   }
 
-  auto dataArchives =
-      std::make_shared<StarfieldDataArchives>(myGamesPath(), gameDirectory());
+  auto dataArchives = std::make_shared<StarfieldDataArchives>(this);
   registerFeature(std::make_shared<StarfieldScriptExtender>(this));
   registerFeature(dataArchives);
   registerFeature(
-      std::make_shared<GamebryoLocalSavegames>(myGamesPath(), "StarfieldCustom.ini"));
+      std::make_shared<GamebryoLocalSavegames>(this, "StarfieldCustom.ini"));
   registerFeature(std::make_shared<StarfieldModDataChecker>(this));
   registerFeature(
       std::make_shared<StarfieldModDataContent>(m_Organizer->gameFeatures()));
