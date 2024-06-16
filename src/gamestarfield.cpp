@@ -21,6 +21,10 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
 #include <QList>
 #include <QObject>
 #include <QString>
@@ -52,7 +56,7 @@ bool GameStarfield::init(IOrganizer* moInfo)
       std::make_shared<StarfieldModDataContent>(m_Organizer->gameFeatures()));
   registerFeature(std::make_shared<GamebryoSaveGameInfo>(this));
   registerFeature(std::make_shared<StarfieldGamePlugins>(moInfo));
-  registerFeature(std::make_shared<StarfieldUnmangedMods>(this));
+  registerFeature(std::make_shared<StarfieldUnmangedMods>(this, localAppFolder()));
   registerFeature(std::make_shared<StarfieldBSAInvalidation>(dataArchives.get(), this));
 
   return true;
@@ -228,8 +232,6 @@ QStringList GameStarfield::primaryPlugins() const
   if (loadOrderMechanism() == LoadOrderMechanism::None) {
     plugins << enabledPlugins();
     plugins << testPlugins;
-  } else {
-    plugins << CCPlugins();
   }
 
   return plugins;
@@ -272,29 +274,60 @@ QStringList GameStarfield::DLCPlugins() const
 
 QStringList GameStarfield::CCPlugins() const
 {
-  QStringList plugins = {};
-  QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
-  if (file.open(QIODevice::ReadOnly)) {
-    ON_BLOCK_EXIT([&file]() {
-      file.close();
-    });
+  QStringList plugins     = {};
+  QStringList corePlugins = primaryPlugins() + DLCPlugins();
+  if (!testFilePresent()) {
+    QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
+    if (file.open(QIODevice::ReadOnly)) {
+      ON_BLOCK_EXIT([&file]() {
+        file.close();
+      });
 
-    if (file.size() == 0) {
-      return plugins;
-    }
-    while (!file.atEnd()) {
-      QByteArray line = file.readLine().trimmed();
-      QString modName;
-      if ((line.size() > 0) && (line.at(0) != '#')) {
-        modName = QString::fromUtf8(line.constData()).toLower();
+      if (file.size() == 0) {
+        return plugins;
       }
+      while (!file.atEnd()) {
+        QByteArray line = file.readLine().trimmed();
+        QString modName;
+        if ((line.size() > 0) && (line.at(0) != '#')) {
+          modName = QString::fromUtf8(line.constData()).toLower();
+        }
 
-      if (modName.size() > 0) {
-        if (!plugins.contains(modName, Qt::CaseInsensitive)) {
-          plugins.append(modName);
+        if (modName.size() > 0) {
+          if (!plugins.contains(modName, Qt::CaseInsensitive)) {
+            if (corePlugins.contains(modName, Qt::CaseInsensitive)) {
+              plugins.append(modName);
+            }
+          }
         }
       }
     }
+  }
+
+  QFile content(localAppFolder() + "/" + gameShortName() + "/ContentCatalog.txt");
+  if (content.exists()) {
+    if (content.open(QIODevice::OpenModeFlag::ReadOnly)) {
+      auto contentData         = content.readAll();
+      QJsonDocument contentDoc = QJsonDocument::fromJson(contentData);
+      QJsonObject contentObj   = contentDoc.object();
+      for (auto mod : contentObj.keys()) {
+        if (mod == "ContentCatalog")
+          continue;
+        auto modData  = contentObj.value(mod).toObject();
+        auto modFiles = modData.value("Files").toArray();
+        bool found    = false;
+        for (auto file : modFiles) {
+          if (file.toString().endsWith(".esm", Qt::CaseInsensitive) ||
+              file.toString().endsWith(".esl", Qt::CaseInsensitive) ||
+              file.toString().endsWith(".esp", Qt::CaseInsensitive)) {
+            if (!plugins.contains(file.toString(), Qt::CaseInsensitive)) {
+              plugins.append(file.toString());
+            }
+          }
+        }
+      }
+    }
+    content.close();
   }
   return plugins;
 }
