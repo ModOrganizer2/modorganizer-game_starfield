@@ -1,9 +1,11 @@
 #include "starfieldunmanagedmods.h"
 
+#include "log.h"
+#include "scopeguard.h"
+
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
-#include <QJsonObject>
 #include <QJsonValue>
 
 StarfieldUnmangedMods::StarfieldUnmangedMods(const GameStarfield* game,
@@ -53,40 +55,54 @@ QFileInfo StarfieldUnmangedMods::referenceFile(const QString& modName) const
   }
 }
 
-QStringList StarfieldUnmangedMods::secondaryFiles(const QString& modName) const
+QJsonObject StarfieldUnmangedMods::getContentCatalog() const
 {
   QFile content(m_AppDataFolder + "/" + game()->gameShortName() +
                 "/ContentCatalog.txt");
-  QStringList files;
   if (content.exists()) {
     if (content.open(QIODevice::OpenModeFlag::ReadOnly)) {
-      auto contentData         = content.readAll();
-      QJsonDocument contentDoc = QJsonDocument::fromJson(contentData);
-      QJsonObject contentObj   = contentDoc.object();
-      for (auto mod : contentObj.keys()) {
-        if (mod == "ContentCatalog")
-          continue;
-        auto modData  = contentObj.value(mod).toObject();
-        auto modFiles = modData.value("Files").toArray();
-        bool found    = false;
-        for (auto file : modFiles) {
-          if (file.toString().startsWith(modName, Qt::CaseInsensitive)) {
-            found = true;
-          }
-          if (found)
-            break;
-        }
-        if (found) {
-          for (auto file : modFiles) {
-            if (!file.toString().endsWith(".esm") &&
-                !file.toString().endsWith(".esl") && !file.toString().endsWith(".esp"))
-              files.append(file.toString());
-          }
-          break;
-        }
+      ON_BLOCK_EXIT([&content]() {
+        content.close();
+      });
+      auto contentData = content.readAll();
+      QJsonParseError jsonError;
+      QJsonDocument contentDoc = QJsonDocument::fromJson(contentData, &jsonError);
+      if (jsonError.error) {
+        MOBase::log::warn(QObject::tr("ContentCatalog.txt appears to be corrupt: %1")
+                              .arg(jsonError.errorString()));
+      } else {
+        return contentDoc.object();
       }
     }
-    content.close();
+  }
+  return QJsonObject();
+}
+
+QStringList StarfieldUnmangedMods::secondaryFiles(const QString& modName) const
+{
+  QStringList files;
+  QJsonObject contentObj = getContentCatalog();
+  for (auto mod : contentObj.keys()) {
+    if (mod == "ContentCatalog")
+      continue;
+    auto modData  = contentObj.value(mod).toObject();
+    auto modFiles = modData.value("Files").toArray();
+    bool found    = false;
+    for (auto file : modFiles) {
+      if (file.toString().startsWith(modName, Qt::CaseInsensitive)) {
+        found = true;
+      }
+      if (found)
+        break;
+    }
+    if (found) {
+      for (auto file : modFiles) {
+        if (!file.toString().endsWith(".esm") && !file.toString().endsWith(".esl") &&
+            !file.toString().endsWith(".esp"))
+          files.append(file.toString());
+      }
+      break;
+    }
   }
   // file extension in FO4 is .ba2 instead of bsa
   QMap<QString, QDir> directories = {{"data", game()->dataDirectory()}};
@@ -103,32 +119,25 @@ QString StarfieldUnmangedMods::displayName(const QString& modName) const
 {
   QFile content(m_AppDataFolder + "/" + game()->gameShortName() +
                 "/ContentCatalog.txt");
-  QString name = modName;
-  if (content.exists()) {
-    if (content.open(QIODevice::OpenModeFlag::ReadOnly)) {
-      auto contentData         = content.readAll();
-      QJsonDocument contentDoc = QJsonDocument::fromJson(contentData);
-      QJsonObject contentObj   = contentDoc.object();
-      for (auto mod : contentObj.keys()) {
-        if (mod == "ContentCatalog")
-          continue;
-        auto modData  = contentObj.value(mod).toObject();
-        auto modFiles = modData.value("Files").toArray();
-        bool found    = false;
-        for (auto file : modFiles) {
-          if (file.toString().startsWith(modName, Qt::CaseInsensitive)) {
-            found = true;
-          }
-          if (found)
-            break;
-        }
-        if (found) {
-          name = modData.value("Title").toString();
-          break;
-        }
+  QString name           = modName;
+  QJsonObject contentObj = getContentCatalog();
+  for (auto mod : contentObj.keys()) {
+    if (mod == "ContentCatalog")
+      continue;
+    auto modData  = contentObj.value(mod).toObject();
+    auto modFiles = modData.value("Files").toArray();
+    bool found    = false;
+    for (auto file : modFiles) {
+      if (file.toString().startsWith(modName, Qt::CaseInsensitive)) {
+        found = true;
       }
+      if (found)
+        break;
     }
-    content.close();
+    if (found) {
+      name = modData.value("Title").toString();
+      break;
+    }
   }
   // unlike in earlier games, in fallout 4 the file name doesn't correspond to
   // the public name

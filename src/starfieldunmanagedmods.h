@@ -5,6 +5,8 @@
 #include "gamestarfield.h"
 #include <gamegamebryo.h>
 
+#include <QJsonObject>
+
 class StarfieldUnmangedMods : public GamebryoUnmangedMods
 {
 public:
@@ -15,6 +17,9 @@ public:
   virtual QFileInfo referenceFile(const QString& modName) const override;
   virtual QStringList secondaryFiles(const QString& modName) const override;
   virtual QString displayName(const QString& modName) const override;
+
+private:
+  QJsonObject getContentCatalog() const;
 
 private:
   QString m_AppDataFolder;
