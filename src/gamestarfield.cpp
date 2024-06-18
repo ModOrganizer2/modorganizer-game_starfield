@@ -59,7 +59,30 @@ bool GameStarfield::init(IOrganizer* moInfo)
   registerFeature(std::make_shared<StarfieldUnmangedMods>(this, localAppFolder()));
   registerFeature(std::make_shared<StarfieldBSAInvalidation>(dataArchives.get(), this));
 
+  m_Organizer->pluginList()->onRefreshed([&]() {
+    setCCCFile();
+  });
+
   return true;
+}
+
+void GameStarfield::setCCCFile() const
+{
+  if (m_Organizer->profilePath().isEmpty())
+    return;
+  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+    QFile cccFile(m_Organizer->profilePath() + "/Starfield.ccc");
+    if (cccFile.open(QIODevice::WriteOnly)) {
+      ON_BLOCK_EXIT([&cccFile]() {
+        cccFile.close();
+      });
+      auto plugins = primaryPlugins();
+      for (auto plugin : plugins) {
+        cccFile.write(plugin.toUtf8());
+        cccFile.write("\n");
+      }
+    }
+  }
 }
 
 QString GameStarfield::gameName() const
@@ -150,11 +173,18 @@ QList<PluginSetting> GameStarfield::settings() const
          << PluginSetting("enable_loot_sorting",
                           tr("As of this release LOOT Starfield support is minimal to "
                              "nonexistant. Toggle this to enable it anyway."),
-                          false);
+                          false)
+         << PluginSetting("enable_loadorder_fix",
+                          tr("Utilize Starfield.ccc to affix core plugin load order "
+                             "(will override existing file)."),
+                          true);
 }
 
 MappingType GameStarfield::mappings() const
 {
+  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+    setCCCFile();
+  }
   MappingType result;
   if (testFilePlugins().isEmpty()) {
     for (const QString& profileFile : {"plugins.txt", "loadorder.txt"}) {
@@ -162,6 +192,10 @@ MappingType GameStarfield::mappings() const
                         localAppFolder() + "/" + gameShortName() + "/" + profileFile,
                         false});
     }
+  }
+  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+    result.push_back({m_Organizer->profilePath() + "/" + "Starfield.ccc",
+                      gameDirectory().absolutePath() + "/" + "Starfield.ccc", false});
   }
   return result;
 }
@@ -278,6 +312,9 @@ QStringList GameStarfield::CCPlugins() const
   QStringList corePlugins = primaryPlugins() + DLCPlugins();
   if (!testFilePresent()) {
     QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
+    if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+      file.setFileName(m_Organizer->profilePath() + "/Starfield.ccc");
+    }
     if (file.open(QIODevice::ReadOnly)) {
       ON_BLOCK_EXIT([&file]() {
         file.close();
