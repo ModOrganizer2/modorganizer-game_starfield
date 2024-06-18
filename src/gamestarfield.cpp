@@ -32,7 +32,6 @@
 
 #include <memory>
 
-#include "scopeguard.h"
 #include "utility.h"
 
 using namespace MOBase;
@@ -66,6 +65,13 @@ bool GameStarfield::init(IOrganizer* moInfo)
   return true;
 }
 
+/*
+ * This is used to write the primary plugins to a profile-based Starfield.ccc file. We
+ * map this into the game directory with the VFS. The game does not currently ship with
+ * this file but does still read it like SkyrimSE and Fallout 4. We can make use of it
+ * to correct the current behavior where core plugins are loaded after parsing
+ * plugins.txt leading to ambiguous load orders.
+ */
 void GameStarfield::setCCCFile() const
 {
   if (m_Organizer->profilePath().isEmpty())
@@ -73,9 +79,6 @@ void GameStarfield::setCCCFile() const
   if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
     QFile cccFile(m_Organizer->profilePath() + "/Starfield.ccc");
     if (cccFile.open(QIODevice::WriteOnly)) {
-      ON_BLOCK_EXIT([&cccFile]() {
-        cccFile.close();
-      });
       auto plugins = primaryPlugins();
       for (auto plugin : plugins) {
         cccFile.write(plugin.toUtf8());
@@ -157,7 +160,7 @@ QString GameStarfield::description() const
 
 MOBase::VersionInfo GameStarfield::version() const
 {
-  return VersionInfo(1, 0, 0, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 1, 0, VersionInfo::RELEASE_CANDIDATE);
 }
 
 QList<PluginSetting> GameStarfield::settings() const
@@ -308,6 +311,9 @@ QStringList GameStarfield::DLCPlugins() const
 
 QStringList GameStarfield::CCPlugins() const
 {
+  // While the CCC file appears to be mostly legacy, we need to parse it since the game
+  // will still read it and there are some compatibility reason to use it for
+  // force-loading the core game plugins.
   QStringList plugins     = {};
   QStringList corePlugins = primaryPlugins() + DLCPlugins();
   if (!testFilePresent()) {
@@ -316,10 +322,6 @@ QStringList GameStarfield::CCPlugins() const
       file.setFileName(m_Organizer->profilePath() + "/Starfield.ccc");
     }
     if (file.open(QIODevice::ReadOnly)) {
-      ON_BLOCK_EXIT([&file]() {
-        file.close();
-      });
-
       if (file.size() == 0) {
         return plugins;
       }
@@ -341,30 +343,30 @@ QStringList GameStarfield::CCPlugins() const
     }
   }
 
+  // The ContentCatalog.txt appears to be the main repository where Starfiled stores
+  // info about the installed Creations. We parse this to correctly mark unmanaged mods
+  // as Creations. The StarfieldUnmanagedMods class handles parsing mod names and files.
   QFile content(localAppFolder() + "/" + gameShortName() + "/ContentCatalog.txt");
-  if (content.exists()) {
-    if (content.open(QIODevice::OpenModeFlag::ReadOnly)) {
-      auto contentData         = content.readAll();
-      QJsonDocument contentDoc = QJsonDocument::fromJson(contentData);
-      QJsonObject contentObj   = contentDoc.object();
-      for (auto mod : contentObj.keys()) {
-        if (mod == "ContentCatalog")
-          continue;
-        auto modData  = contentObj.value(mod).toObject();
-        auto modFiles = modData.value("Files").toArray();
-        bool found    = false;
-        for (auto file : modFiles) {
-          if (file.toString().endsWith(".esm", Qt::CaseInsensitive) ||
-              file.toString().endsWith(".esl", Qt::CaseInsensitive) ||
-              file.toString().endsWith(".esp", Qt::CaseInsensitive)) {
-            if (!plugins.contains(file.toString(), Qt::CaseInsensitive)) {
-              plugins.append(file.toString());
-            }
+  if (content.open(QIODevice::OpenModeFlag::ReadOnly)) {
+    auto contentData         = content.readAll();
+    QJsonDocument contentDoc = QJsonDocument::fromJson(contentData);
+    QJsonObject contentObj   = contentDoc.object();
+    for (auto mod : contentObj.keys()) {
+      if (mod == "ContentCatalog")
+        continue;
+      auto modData  = contentObj.value(mod).toObject();
+      auto modFiles = modData.value("Files").toArray();
+      bool found    = false;
+      for (auto file : modFiles) {
+        if (file.toString().endsWith(".esm", Qt::CaseInsensitive) ||
+            file.toString().endsWith(".esl", Qt::CaseInsensitive) ||
+            file.toString().endsWith(".esp", Qt::CaseInsensitive)) {
+          if (!plugins.contains(file.toString(), Qt::CaseInsensitive)) {
+            plugins.append(file.toString());
           }
         }
       }
     }
-    content.close();
   }
   return plugins;
 }
