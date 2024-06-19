@@ -21,10 +21,6 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
 #include <QList>
 #include <QObject>
 #include <QString>
@@ -55,7 +51,7 @@ bool GameStarfield::init(IOrganizer* moInfo)
       std::make_shared<StarfieldModDataContent>(m_Organizer->gameFeatures()));
   registerFeature(std::make_shared<GamebryoSaveGameInfo>(this));
   registerFeature(std::make_shared<StarfieldGamePlugins>(moInfo));
-  registerFeature(std::make_shared<StarfieldUnmangedMods>(this, localAppFolder()));
+  registerFeature(std::make_shared<StarfieldUnmanagedMods>(this, localAppFolder()));
   registerFeature(std::make_shared<StarfieldBSAInvalidation>(dataArchives.get(), this));
 
   m_Organizer->pluginList()->onRefreshed([&]() {
@@ -318,23 +314,22 @@ QStringList GameStarfield::CCPlugins() const
   QStringList corePlugins = primaryPlugins() + DLCPlugins();
   if (!testFilePresent()) {
     QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
-    if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+    if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool() &&
+        !m_Organizer->profilePath().isEmpty()) {
       file.setFileName(m_Organizer->profilePath() + "/Starfield.ccc");
     }
     if (file.open(QIODevice::ReadOnly)) {
-      if (file.size() == 0) {
-        return plugins;
-      }
-      while (!file.atEnd()) {
-        QByteArray line = file.readLine().trimmed();
-        QString modName;
-        if ((line.size() > 0) && (line.at(0) != '#')) {
-          modName = QString::fromUtf8(line.constData()).toLower();
-        }
+      if (file.size() > 0) {
+        while (!file.atEnd()) {
+          QByteArray line = file.readLine().trimmed();
+          QString modName;
+          if ((line.size() > 0) && (line.at(0) != '#')) {
+            modName = QString::fromUtf8(line.constData()).toLower();
+          }
 
-        if (modName.size() > 0) {
-          if (!plugins.contains(modName, Qt::CaseInsensitive)) {
-            if (corePlugins.contains(modName, Qt::CaseInsensitive)) {
+          if (modName.size() > 0) {
+            if (!plugins.contains(modName, Qt::CaseInsensitive) &&
+                !corePlugins.contains(modName, Qt::CaseInsensitive)) {
               plugins.append(modName);
             }
           }
@@ -343,28 +338,18 @@ QStringList GameStarfield::CCPlugins() const
     }
   }
 
+  std::shared_ptr<StarfieldUnmanagedMods> unmanagedMods =
+      std::static_pointer_cast<StarfieldUnmanagedMods>(
+          m_Organizer->gameFeatures()->gameFeature<MOBase::UnmanagedMods>());
+
   // The ContentCatalog.txt appears to be the main repository where Starfiled stores
   // info about the installed Creations. We parse this to correctly mark unmanaged mods
   // as Creations. The StarfieldUnmanagedMods class handles parsing mod names and files.
-  QFile content(localAppFolder() + "/" + gameShortName() + "/ContentCatalog.txt");
-  if (content.open(QIODevice::OpenModeFlag::ReadOnly)) {
-    auto contentData         = content.readAll();
-    QJsonDocument contentDoc = QJsonDocument::fromJson(contentData);
-    QJsonObject contentObj   = contentDoc.object();
-    for (auto mod : contentObj.keys()) {
-      if (mod == "ContentCatalog")
-        continue;
-      auto modData  = contentObj.value(mod).toObject();
-      auto modFiles = modData.value("Files").toArray();
-      bool found    = false;
-      for (auto file : modFiles) {
-        if (file.toString().endsWith(".esm", Qt::CaseInsensitive) ||
-            file.toString().endsWith(".esl", Qt::CaseInsensitive) ||
-            file.toString().endsWith(".esp", Qt::CaseInsensitive)) {
-          if (!plugins.contains(file.toString(), Qt::CaseInsensitive)) {
-            plugins.append(file.toString());
-          }
-        }
+  if (unmanagedMods.get()) {
+    auto contentCatalog = unmanagedMods->parseContentCatalog();
+    for (const auto& mod : contentCatalog) {
+      if (!plugins.contains(mod.first, Qt::CaseInsensitive)) {
+        plugins.append(mod.first);
       }
     }
   }

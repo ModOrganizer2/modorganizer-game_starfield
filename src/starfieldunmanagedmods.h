@@ -7,11 +7,19 @@
 
 #include <QJsonObject>
 
-class StarfieldUnmangedMods : public GamebryoUnmangedMods
+class StarfieldUnmanagedMods : public GamebryoUnmangedMods
 {
+  friend class GameStarfield;
+
+  struct ContentCatalog
+  {
+    QString name;
+    QStringList files;
+  };
+
 public:
-  StarfieldUnmangedMods(const GameStarfield* game, const QString appDataFolder);
-  ~StarfieldUnmangedMods();
+  StarfieldUnmanagedMods(const GameStarfield* game, const QString& appDataFolder);
+  ~StarfieldUnmanagedMods();
 
   virtual QStringList mods(bool onlyOfficial) const override;
   virtual QFileInfo referenceFile(const QString& modName) const override;
@@ -19,7 +27,7 @@ public:
   virtual QString displayName(const QString& modName) const override;
 
 private:
-  QJsonObject getContentCatalog() const;
+  std::map<QString, ContentCatalog> parseContentCatalog() const;
 
 private:
   QString m_AppDataFolder;
