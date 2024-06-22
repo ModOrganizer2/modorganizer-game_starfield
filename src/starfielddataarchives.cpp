@@ -3,11 +3,6 @@
 #include "iprofile.h"
 #include <utility.h>
 
-StarfieldDataArchives::StarfieldDataArchives(const QDir& myGamesDir,
-                                             const QDir& gamePath)
-    : GamebryoDataArchives(myGamesDir), m_GamePath(gamePath.absolutePath())
-{}
-
 QStringList StarfieldDataArchives::vanillaArchives() const
 {
   return {"Starfield - Animations.ba2",
@@ -71,11 +66,11 @@ QStringList StarfieldDataArchives::archives(const MOBase::IProfile* profile) con
 {
   QStringList result;
 
-  QString defaultIniFile = m_GamePath.absoluteFilePath("Starfield.ini");
+  QString defaultIniFile = gameDirectory().absoluteFilePath("Starfield.ini");
   QString customIniFile =
       profile->localSettingsEnabled()
           ? QDir(profile->absolutePath()).absoluteFilePath("StarfieldCustom.ini")
-          : m_LocalGameDir.absoluteFilePath("StarfieldCustom.ini");
+          : localGameDirectory().absoluteFilePath("StarfieldCustom.ini");
   QStringList archiveSettings = {"SResourceArchiveList", "sResourceIndexFileList",
                                  "SResourceArchiveMemoryCacheList",
                                  "sResourceStartUpArchiveList",
