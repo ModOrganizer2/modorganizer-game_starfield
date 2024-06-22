@@ -61,7 +61,9 @@ StarfieldUnmanagedMods::parseContentCatalog() const
                 "/ContentCatalog.txt");
   std::map<QString, StarfieldUnmanagedMods::ContentCatalog> contentCatalog;
   if (content.open(QIODevice::OpenModeFlag::ReadOnly)) {
-    auto contentData = content.readAll();
+    auto contentData      = content.readAll();
+    QString convertedData = QString::fromLatin1(contentData);
+    contentData           = convertedData.toUtf8();
     QJsonParseError jsonError;
     QJsonDocument contentDoc = QJsonDocument::fromJson(contentData, &jsonError);
     if (jsonError.error) {
