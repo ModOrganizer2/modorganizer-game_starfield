@@ -61,9 +61,9 @@ void StarfieldSaveGame::fetchInformationFields(
   unsigned int version;
   // file.read(fileID, 12);
   headerSize  = file.readInt(12);
-  saveNumber  = file.readInt();
-  saveVersion = file.readChar();
   version     = file.readInt();
+  saveVersion = file.readChar();
+  saveNumber  = file.readInt();
   file.read(playerName);
 
   unsigned int temp;
