@@ -28,7 +28,6 @@
 
 #include <memory>
 
-#include "scopeguard.h"
 #include "utility.h"
 
 using namespace MOBase;
@@ -51,10 +50,37 @@ bool GameStarfield::init(IOrganizer* moInfo)
       std::make_shared<StarfieldModDataContent>(m_Organizer->gameFeatures()));
   registerFeature(std::make_shared<GamebryoSaveGameInfo>(this));
   registerFeature(std::make_shared<StarfieldGamePlugins>(moInfo));
-  registerFeature(std::make_shared<StarfieldUnmangedMods>(this));
+  registerFeature(std::make_shared<StarfieldUnmanagedMods>(this, localAppFolder()));
   registerFeature(std::make_shared<StarfieldBSAInvalidation>(dataArchives.get(), this));
 
+  m_Organizer->pluginList()->onRefreshed([&]() {
+    setCCCFile();
+  });
+
   return true;
+}
+
+/*
+ * This is used to write the primary plugins to a profile-based Starfield.ccc file. We
+ * map this into the game directory with the VFS. The game does not currently ship with
+ * this file but does still read it like SkyrimSE and Fallout 4. We can make use of it
+ * to correct the current behavior where core plugins are loaded after parsing
+ * plugins.txt leading to ambiguous load orders.
+ */
+void GameStarfield::setCCCFile() const
+{
+  if (m_Organizer->profilePath().isEmpty())
+    return;
+  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+    QFile cccFile(m_Organizer->profilePath() + "/Starfield.ccc");
+    if (cccFile.open(QIODevice::WriteOnly)) {
+      auto plugins = primaryPlugins();
+      for (auto plugin : plugins) {
+        cccFile.write(plugin.toUtf8());
+        cccFile.write("\n");
+      }
+    }
+  }
 }
 
 QString GameStarfield::gameName() const
@@ -129,7 +155,7 @@ QString GameStarfield::description() const
 
 MOBase::VersionInfo GameStarfield::version() const
 {
-  return VersionInfo(1, 0, 0, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 1, 0, VersionInfo::RELEASE_CANDIDATE);
 }
 
 QList<PluginSetting> GameStarfield::settings() const
@@ -145,11 +171,18 @@ QList<PluginSetting> GameStarfield::settings() const
          << PluginSetting("enable_loot_sorting",
                           tr("As of this release LOOT Starfield support is minimal to "
                              "nonexistant. Toggle this to enable it anyway."),
-                          false);
+                          false)
+         << PluginSetting("enable_loadorder_fix",
+                          tr("Utilize Starfield.ccc to affix core plugin load order "
+                             "(will override existing file)."),
+                          true);
 }
 
 MappingType GameStarfield::mappings() const
 {
+  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+    setCCCFile();
+  }
   MappingType result;
   if (testFilePlugins().isEmpty()) {
     for (const QString& profileFile : {"plugins.txt", "loadorder.txt"}) {
@@ -157,6 +190,10 @@ MappingType GameStarfield::mappings() const
                         localAppFolder() + "/" + gameShortName() + "/" + profileFile,
                         false});
     }
+  }
+  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+    result.push_back({m_Organizer->profilePath() + "/" + "Starfield.ccc",
+                      gameDirectory().absolutePath() + "/" + "Starfield.ccc", false});
   }
   return result;
 }
@@ -220,15 +257,13 @@ QStringList GameStarfield::primaryPlugins() const
 {
   QStringList plugins = {"Starfield.esm", "Constellation.esm",
                          "OldMars.esm",   "BlueprintShips-Starfield.esm",
-                         "SFBGS003.esm",  "SFBGS006.esm",
-                         "SFBGS007.esm",  "SFBGS008.esm"};
+                         "SFBGS007.esm",  "SFBGS008.esm",
+                         "SFBGS006.esm",  "SFBGS003.esm"};
 
   auto testPlugins = testFilePlugins();
   if (loadOrderMechanism() == LoadOrderMechanism::None) {
     plugins << enabledPlugins();
     plugins << testPlugins;
-  } else {
-    plugins << CCPlugins();
   }
 
   return plugins;
@@ -271,27 +306,49 @@ QStringList GameStarfield::DLCPlugins() const
 
 QStringList GameStarfield::CCPlugins() const
 {
-  QStringList plugins = {};
-  QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
-  if (file.open(QIODevice::ReadOnly)) {
-    ON_BLOCK_EXIT([&file]() {
-      file.close();
-    });
-
-    if (file.size() == 0) {
-      return plugins;
+  // While the CCC file appears to be mostly legacy, we need to parse it since the game
+  // will still read it and there are some compatibility reason to use it for
+  // force-loading the core game plugins.
+  QStringList plugins     = {};
+  QStringList corePlugins = primaryPlugins() + DLCPlugins();
+  if (!testFilePresent()) {
+    QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
+    if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool() &&
+        !m_Organizer->profilePath().isEmpty()) {
+      file.setFileName(m_Organizer->profilePath() + "/Starfield.ccc");
     }
-    while (!file.atEnd()) {
-      QByteArray line = file.readLine().trimmed();
-      QString modName;
-      if ((line.size() > 0) && (line.at(0) != '#')) {
-        modName = QString::fromUtf8(line.constData()).toLower();
-      }
+    if (file.open(QIODevice::ReadOnly)) {
+      if (file.size() > 0) {
+        while (!file.atEnd()) {
+          QByteArray line = file.readLine().trimmed();
+          QString modName;
+          if ((line.size() > 0) && (line.at(0) != '#')) {
+            modName = QString::fromUtf8(line.constData()).toLower();
+          }
 
-      if (modName.size() > 0) {
-        if (!plugins.contains(modName, Qt::CaseInsensitive)) {
-          plugins.append(modName);
+          if (modName.size() > 0) {
+            if (!plugins.contains(modName, Qt::CaseInsensitive) &&
+                !corePlugins.contains(modName, Qt::CaseInsensitive)) {
+              plugins.append(modName);
+            }
+          }
         }
+      }
+    }
+  }
+
+  std::shared_ptr<StarfieldUnmanagedMods> unmanagedMods =
+      std::static_pointer_cast<StarfieldUnmanagedMods>(
+          m_Organizer->gameFeatures()->gameFeature<MOBase::UnmanagedMods>());
+
+  // The ContentCatalog.txt appears to be the main repository where Starfiled stores
+  // info about the installed Creations. We parse this to correctly mark unmanaged mods
+  // as Creations. The StarfieldUnmanagedMods class handles parsing mod names and files.
+  if (unmanagedMods.get()) {
+    auto contentCatalog = unmanagedMods->parseContentCatalog();
+    for (const auto& mod : contentCatalog) {
+      if (!plugins.contains(mod.first, Qt::CaseInsensitive)) {
+        plugins.append(mod.first);
       }
     }
   }
