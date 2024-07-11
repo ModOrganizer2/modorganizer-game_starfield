@@ -168,10 +168,6 @@ QList<PluginSetting> GameStarfield::settings() const
          << PluginSetting("enable_management_warnings",
                           tr("Show a warning when plugins.txt management is invalid."),
                           true)
-         << PluginSetting("enable_loot_sorting",
-                          tr("As of this release LOOT Starfield support is minimal to "
-                             "nonexistant. Toggle this to enable it anyway."),
-                          false)
          << PluginSetting("enable_loadorder_fix",
                           tr("Utilize Starfield.ccc to affix core plugin load order "
                              "(will override existing file)."),
@@ -357,10 +353,7 @@ QStringList GameStarfield::CCPlugins() const
 
 IPluginGame::SortMechanism GameStarfield::sortMechanism() const
 {
-  if (!testFilePresent() &&
-      m_Organizer->pluginSetting(name(), "enable_loot_sorting").toBool())
-    return IPluginGame::SortMechanism::LOOT;
-  return IPluginGame::SortMechanism::NONE;
+  return IPluginGame::SortMechanism::LOOT;
 }
 
 IPluginGame::LoadOrderMechanism GameStarfield::loadOrderMechanism() const
