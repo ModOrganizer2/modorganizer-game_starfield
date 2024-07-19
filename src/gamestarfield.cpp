@@ -188,8 +188,12 @@ MappingType GameStarfield::mappings() const
     }
   }
   if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
+    // map the Starfield.ccc from the profile to both the game folder and the My Games
+    // folder (used by LOOT for instance)
     result.push_back({m_Organizer->profilePath() + "/" + "Starfield.ccc",
                       gameDirectory().absolutePath() + "/" + "Starfield.ccc", false});
+    result.push_back({m_Organizer->profilePath() + "/" + "Starfield.ccc",
+                      myGamesPath() + "/" + "Starfield.ccc", false});
   }
   return result;
 }
