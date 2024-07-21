@@ -4,48 +4,56 @@
 <context>
     <name>GameStarfield</name>
     <message>
-        <location filename="gamestarfield.cpp" line="117"/>
+        <location filename="gamestarfield.cpp" line="143"/>
         <source>Starfield Support Plugin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="127"/>
+        <location filename="gamestarfield.cpp" line="153"/>
         <source>Adds support for the game Starfield.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="140"/>
+        <location filename="gamestarfield.cpp" line="166"/>
         <source>Show a warning when ESP plugins are enabled in the load order.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="143"/>
+        <location filename="gamestarfield.cpp" line="169"/>
         <source>Show a warning when plugins.txt management is invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="146"/>
-        <source>As of this release LOOT Starfield support is minimal to nonexistant. Toggle this to enable it anyway.</source>
+        <location filename="gamestarfield.cpp" line="172"/>
+        <source>Utilize Starfield.ccc to affix core plugin load order (will override existing file).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="374"/>
+        <location filename="gamestarfield.cpp" line="428"/>
         <source>You have active ESP plugins in Starfield</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="376"/>
+        <location filename="gamestarfield.cpp" line="430"/>
         <source>sTestFile entries are present</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="386"/>
+        <location filename="gamestarfield.cpp" line="440"/>
         <source>&lt;p&gt;ESP plugins are not ideal for Starfield. In addition to being unable to sort them alongside ESM or master-flagged plugins, certain record references are always kept loaded by the game. This consumes unnecessary resources and limits the game&apos;s ability to load what it needs.&lt;/p&gt;&lt;p&gt;Ideally, plugins should be saved as ESM files upon release. It can also be released as an ESL plugin, however there are additional concerns with the way light plugins are currently handled and should only be used when absolutely certain about what you&apos;re doing.&lt;/p&gt;&lt;p&gt;Notably, xEdit does not currently support saving ESP files.&lt;/p&gt;&lt;h4&gt;Current ESPs:&lt;/h4&gt;&lt;p&gt;%1&lt;/p&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gamestarfield.cpp" line="400"/>
+        <location filename="gamestarfield.cpp" line="454"/>
         <source>&lt;p&gt;You have plugin managment enabled but you still have sTestFile settings in your StarfieldCustom.ini. These must be removed or the game will not read the plugins.txt file. Management is still disabled.&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <location filename="starfieldunmanagedmods.cpp" line="70"/>
+        <source>ContentCatalog.txt appears to be corrupt: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
