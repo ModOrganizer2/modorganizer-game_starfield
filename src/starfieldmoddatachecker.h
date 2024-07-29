@@ -15,7 +15,7 @@ protected:
         "interface",  "meshes",        "geometries", "music", "scripts",     "sound",
         "strings",    "textures",      "trees",      "video", "materials",   "sfse",
         "distantlod", "asi",           "Tools",      "MCM",   "distantland", "mits",
-        "dllplugins", "CalienteTools", "shadersfx",  "aaf",   "root"};
+        "dllplugins", "CalienteTools", "shadersfx",  "aaf"};
     return result;
   }
   virtual const FileNameSet& possibleFileExtensions() const override
