@@ -104,7 +104,11 @@ std::unique_ptr<GamebryoSaveGame::DataFields> StarfieldSaveGame::fetchDataFields
                            dummyLocation, dummyTime);
   }
 
-  bool extraInfo          = saveVersion >= 122;
+  int extraInfo = 0;
+  if (saveVersion >= 122)
+    extraInfo = 1;
+  if (saveVersion >= 140)
+    extraInfo = 2;
   QStringList gamePlugins = m_Game->primaryPlugins() + m_Game->enabledPlugins();
 
   QString ignore;

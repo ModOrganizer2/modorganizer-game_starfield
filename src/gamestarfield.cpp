@@ -258,7 +258,8 @@ QStringList GameStarfield::primaryPlugins() const
   QStringList plugins = {"Starfield.esm", "Constellation.esm",
                          "OldMars.esm",   "BlueprintShips-Starfield.esm",
                          "SFBGS007.esm",  "SFBGS008.esm",
-                         "SFBGS006.esm",  "SFBGS003.esm"};
+                         "SFBGS006.esm",  "SFBGS003.esm",
+                         "SFBGS004.esm"};
 
   auto testPlugins = testFilePlugins();
   if (loadOrderMechanism() == LoadOrderMechanism::None) {
