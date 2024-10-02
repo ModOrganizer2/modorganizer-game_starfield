@@ -219,7 +219,11 @@ QStringList GameStarfield::primaryPlugins() const
                          "SFBGS006.esm",       "SFBGS007.esm",
                          "SFBGS008.esm",       "BlueprintShips-Starfield.esm"};
 
-  plugins << CCCPlugins();
+  for (auto plugin : CCCPlugins()) {
+    if (!plugins.contains(plugin, Qt::CaseInsensitive)) {
+      plugins.append(plugin);
+    }
+  }
 
   auto testPlugins = testFilePlugins();
   if (loadOrderMechanism() == LoadOrderMechanism::None) {
@@ -288,13 +292,10 @@ QStringList GameStarfield::CCCPlugins() const
           QByteArray line = file->readLine().trimmed();
           QString modName;
           if ((line.size() > 0) && (line.at(0) != '#')) {
-            modName = QString::fromUtf8(line.constData()).toLower();
+            modName = QString::fromUtf8(line.constData());
           }
-
           if (modName.size() > 0) {
-            if (!plugins.contains(modName, Qt::CaseInsensitive)) {
-              plugins.append(modName);
-            }
+            plugins.append(modName);
           }
         }
       }
