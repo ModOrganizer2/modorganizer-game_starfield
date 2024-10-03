@@ -69,9 +69,9 @@ protected:
   QString savegameSEExtension() const override;
 
 private:
+  QStringList CCCPlugins() const;
   bool activeESP() const;
   bool testFilePresent() const;
-  void setCCCFile() const;
 
 private:
   static const unsigned int PROBLEM_ESP       = 1;

@@ -53,34 +53,7 @@ bool GameStarfield::init(IOrganizer* moInfo)
   registerFeature(std::make_shared<StarfieldUnmanagedMods>(this, localAppFolder()));
   registerFeature(std::make_shared<StarfieldBSAInvalidation>(dataArchives.get(), this));
 
-  m_Organizer->pluginList()->onRefreshed([&]() {
-    setCCCFile();
-  });
-
   return true;
-}
-
-/*
- * This is used to write the primary plugins to a profile-based Starfield.ccc file. We
- * map this into the game directory with the VFS. The game does not currently ship with
- * this file but does still read it like SkyrimSE and Fallout 4. We can make use of it
- * to correct the current behavior where core plugins are loaded after parsing
- * plugins.txt leading to ambiguous load orders.
- */
-void GameStarfield::setCCCFile() const
-{
-  if (m_Organizer->profilePath().isEmpty())
-    return;
-  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
-    QFile cccFile(m_Organizer->profilePath() + "/Starfield.ccc");
-    if (cccFile.open(QIODevice::WriteOnly)) {
-      auto plugins = primaryPlugins();
-      for (auto plugin : plugins) {
-        cccFile.write(plugin.toUtf8());
-        cccFile.write("\n");
-      }
-    }
-  }
 }
 
 QString GameStarfield::gameName() const
@@ -167,18 +140,11 @@ QList<PluginSetting> GameStarfield::settings() const
                 true)
          << PluginSetting("enable_management_warnings",
                           tr("Show a warning when plugins.txt management is invalid."),
-                          true)
-         << PluginSetting("enable_loadorder_fix",
-                          tr("Utilize Starfield.ccc to affix core plugin load order "
-                             "(will override existing file)."),
                           true);
 }
 
 MappingType GameStarfield::mappings() const
 {
-  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
-    setCCCFile();
-  }
   MappingType result;
   if (testFilePlugins().isEmpty()) {
     for (const QString& profileFile : {"plugins.txt", "loadorder.txt"}) {
@@ -186,14 +152,6 @@ MappingType GameStarfield::mappings() const
                         localAppFolder() + "/" + gameShortName() + "/" + profileFile,
                         false});
     }
-  }
-  if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool()) {
-    // map the Starfield.ccc from the profile to both the game folder and the My Games
-    // folder (used by LOOT for instance)
-    result.push_back({m_Organizer->profilePath() + "/" + "Starfield.ccc",
-                      gameDirectory().absolutePath() + "/" + "Starfield.ccc", false});
-    result.push_back({m_Organizer->profilePath() + "/" + "Starfield.ccc",
-                      myGamesPath() + "/" + "Starfield.ccc", false});
   }
   return result;
 }
@@ -255,17 +213,25 @@ QStringList GameStarfield::testFilePlugins() const
 
 QStringList GameStarfield::primaryPlugins() const
 {
-  QStringList plugins = {"Starfield.esm", "Constellation.esm",
-                         "OldMars.esm",   "BlueprintShips-Starfield.esm",
-                         "SFBGS007.esm",  "SFBGS008.esm",
-                         "SFBGS006.esm",  "SFBGS003.esm",
-                         "SFBGS004.esm"};
+  QStringList plugins = {"Starfield.esm",      "Constellation.esm",
+                         "ShatteredSpace.esm", "OldMars.esm",
+                         "SFBGS003.esm",       "SFBGS004.esm",
+                         "SFBGS006.esm",       "SFBGS007.esm",
+                         "SFBGS008.esm",       "BlueprintShips-Starfield.esm"};
+
+  for (auto plugin : CCCPlugins()) {
+    if (!plugins.contains(plugin, Qt::CaseInsensitive)) {
+      plugins.append(plugin);
+    }
+  }
 
   auto testPlugins = testFilePlugins();
   if (loadOrderMechanism() == LoadOrderMechanism::None) {
     plugins << enabledPlugins();
     plugins << testPlugins;
   }
+
+  plugins.removeDuplicates();
 
   return plugins;
 }
@@ -302,42 +268,45 @@ bool GameStarfield::prepareIni(const QString& exec)
 
 QStringList GameStarfield::DLCPlugins() const
 {
-  return {};
+  return {"Constellation.esm", "ShatteredSpace.esm"};
 }
 
-QStringList GameStarfield::CCPlugins() const
+QStringList GameStarfield::CCCPlugins() const
 {
   // While the CCC file appears to be mostly legacy, we need to parse it since the game
   // will still read it and there are some compatibility reason to use it for
   // force-loading the core game plugins.
-  QStringList plugins     = {};
-  QStringList corePlugins = primaryPlugins() + DLCPlugins();
+  QStringList plugins = {};
   if (!testFilePresent()) {
-    QFile file(gameDirectory().absoluteFilePath("Starfield.ccc"));
-    if (m_Organizer->pluginSetting(name(), "enable_loadorder_fix").toBool() &&
-        !m_Organizer->profilePath().isEmpty()) {
-      file.setFileName(m_Organizer->profilePath() + "/Starfield.ccc");
+    QFile myDocsCCCFile(myGamesPath() + "\Starfield.ccc");
+    QFile gameCCCFile(gameDirectory().absoluteFilePath("Starfield.ccc"));
+    QFile* file;
+    if (myDocsCCCFile.exists()) {
+      file = &myDocsCCCFile;
+    } else {
+      file = &gameCCCFile;
     }
-    if (file.open(QIODevice::ReadOnly)) {
-      if (file.size() > 0) {
-        while (!file.atEnd()) {
-          QByteArray line = file.readLine().trimmed();
+    if (file->open(QIODevice::ReadOnly)) {
+      if (file->size() > 0) {
+        while (!file->atEnd()) {
+          QByteArray line = file->readLine().trimmed();
           QString modName;
           if ((line.size() > 0) && (line.at(0) != '#')) {
-            modName = QString::fromUtf8(line.constData()).toLower();
+            modName = QString::fromUtf8(line.constData());
           }
-
           if (modName.size() > 0) {
-            if (!plugins.contains(modName, Qt::CaseInsensitive) &&
-                !corePlugins.contains(modName, Qt::CaseInsensitive)) {
-              plugins.append(modName);
-            }
+            plugins.append(modName);
           }
         }
       }
     }
   }
+  return plugins;
+}
 
+QStringList GameStarfield::CCPlugins() const
+{
+  QStringList plugins = {};
   std::shared_ptr<StarfieldUnmanagedMods> unmanagedMods =
       std::static_pointer_cast<StarfieldUnmanagedMods>(
           m_Organizer->gameFeatures()->gameFeature<MOBase::UnmanagedMods>());

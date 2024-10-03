@@ -11,6 +11,11 @@ bool StarfieldGamePlugins::mediumPluginsAreSupported()
   return true;
 }
 
+bool StarfieldGamePlugins::blueprintPluginsAreSupported()
+{
+  return true;
+}
+
 void StarfieldGamePlugins::writePluginList(const IPluginList* pluginList,
                                            const QString& filePath)
 {

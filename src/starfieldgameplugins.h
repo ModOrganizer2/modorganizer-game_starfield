@@ -14,6 +14,7 @@ public:
 
 protected:
   virtual bool mediumPluginsAreSupported() override;
+  virtual bool blueprintPluginsAreSupported() override;
   virtual void writePluginList(const MOBase::IPluginList* pluginList,
                                const QString& filePath) override;
   virtual QStringList readPluginList(MOBase::IPluginList* pluginList) override;
