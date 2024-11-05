@@ -281,7 +281,7 @@ QStringList GameStarfield::CCCPlugins() const
   // force-loading the core game plugins.
   QStringList plugins = {};
   if (!testFilePresent()) {
-    QFile myDocsCCCFile(myGamesPath() + "\Starfield.ccc");
+    QFile myDocsCCCFile(myGamesPath() + "/Starfield.ccc");
     QFile gameCCCFile(gameDirectory().absoluteFilePath("Starfield.ccc"));
     QFile* file;
     if (myDocsCCCFile.exists()) {
